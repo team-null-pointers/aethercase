@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AegisCase - Clinical Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: { brand: { 50: '#eef8ff', 500: '#0284c7', 600: '#0369a1', 700: '#075985' } }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    
+    /* Body Map Styling */
+    #body-map-container {
+      position: relative;
+      width: 250px;
+      height: 450px;
+      margin: 0 auto;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><path fill="%231e293b" stroke="%23334155" stroke-width="2" d="M50 10 C40 10, 40 25, 50 25 C60 25, 60 10, 50 10 Z M35 30 L65 30 C75 30, 80 40, 80 50 L80 90 C80 100, 75 100, 70 100 L70 50 L65 50 L65 110 C65 120, 55 120, 55 110 L55 90 L45 90 L45 110 C45 120, 35 120, 35 110 L35 50 L30 50 L30 100 C25 100, 20 100, 20 90 L20 50 C20 40, 25 30, 35 30 Z M45 110 L45 190 C45 195, 35 195, 35 190 L35 115 L50 115 Z M55 110 L55 190 C55 195, 65 195, 65 190 L65 115 Z"/></svg>');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      cursor: crosshair;
+      border: 1px dashed #334155;
+      border-radius: 8px;
+    }
+    .pain-pin {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #ef4444;
+      border: 2px solid white;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    /* Print Formatting */
+    @media print {
+      body { background: white; color: black; }
+      aside, header, #export-btn, .no-print { display: none !important; }
+      main { margin: 0; padding: 0; }
+      .print-box { border: 1px solid #ccc; color: black !important; background: white !important; }
+      .text-white { color: black !important; }
+      .text-slate-400, .text-slate-300 { color: #333 !important; }
+      .bg-slate-900, .bg-slate-950 { background: white !important; }
+    }
+  </style>
+</head>
+<body class="h-full flex overflow-hidden font-sans antialiased text-sm">
+
+  <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 no-print">
+    <div>
+      <div class="h-16 flex items-center px-6 border-b border-slate-800 gap-3">
+        <div class="p-1.5 bg-sky-600 rounded-lg text-white">
+          <i data-lucide="dna" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-base tracking-wide text-white">Aether<span class="text-sky-400">Case</span></h1>
+        </div>
+      </div>
+      <nav class="p-3 space-y-1">
+        <button onclick="router('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition">
+          <i data-lucide="folder-open" class="w-4 h-4 text-sky-400"></i> <span class="font-medium">Case Records</span>
+        </button>
+        <button onclick="router('intake')" id="nav-intake" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition">
+          <i data-lucide="stethoscope" class="w-4 h-4 text-emerald-400"></i> <span class="font-medium">New Consultation</span>
+        </button>
+      </nav>
+    </div>
+    <div class="p-4 border-t border-slate-800 bg-slate-900/50">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-semibold text-slate-200">DR</div>
+        <div>
+          <p class="text-xs font-semibold text-white">Dr. Aris Vance, MD</p>
+          <p class="text-[11px] text-slate-400">Internal Medicine</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="flex-1 flex flex-col overflow-hidden bg-slate-950">
+    <div id="content-container" class="flex-1 overflow-y-auto p-6 md:p-8 relative">
+      </div>
+  </main>
+
+  <script>
+    // --- DATABASE MOCK ---
+    const DB_KEY = 'aethercase_db';
+    let db = JSON.parse(localStorage.getItem(DB_KEY)) || { patients: [], consultations: [] };
+
+    function saveData() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+    
+    // Generates a mock patient if empty to demonstrate functionality
+    if(db.patients.length === 0) {
+      const mockPatient = { id: 'PT-1001', name: 'Jane Doe', age: 45, sex: 'Female', bloodGroup: 'O+', phone: '555-0192', height: 165, weight: 68 };
+      const mockCase = { 
+        id: 'CS-9921', patientId: 'PT-1001', date: new Date().toISOString(),
+        cc: 'Persistent dry cough', onset: '3 weeks ago', duration: 21,
+        vitals: { temp: 37.5, hr: 102, sbp: 125, dbp: 82, rr: 18, spo2: 97, bmi: 24.98 },
+        flags: ['Fever / Pyrexia', 'Tachycardia'],
+        soap: "S: 45yo female presents with persistent dry cough x 3 weeks.\nO: T 37.5°C, HR 102. Lungs clear to auscultation.\nA: Post-viral tussis vs atypical pneumonia.\nP: CXR ordered. Prescribed Benzonatate 100mg TID PRN."
+      };
+      db.patients.push(mockPatient);
+      db.consultations.push(mockCase);
+      saveData();
+    }
+
+    // --- ROUTER ---
+    let currentView = 'dashboard';
+    function router(view, params = {}) {
+      currentView = view;
+      const container = document.getElementById('content-container');
+      
+      document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('bg-slate-800', 'text-white'); b.classList.add('text-slate-300'); });
+      if(document.getElementById(`nav-${view}`)) document.getElementById(`nav-${view}`).classList.add('bg-slate-800', 'text-white');
+
+      if (view === 'dashboard') renderDashboard(container);
+      else if (view === 'intake') renderIntakeWizard(container);
+      else if (view === 'case-record') renderCaseRecord(container, params.caseId);
+      
+      lucide.createIcons();
+    }
+
+    // ============================================================================
+    // VIEW 1: DASHBOARD
+    // ============================================================================
+    function renderDashboard(container) {
+      container.innerHTML = `
+        <div class="max-w-6xl mx-auto space-y-6">
+          <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Clinical Case Dashboard</h2>
+              <p class="text-sm text-slate-400">Manage patients, historical records, and ongoing consultations.</p>
+            </div>
+            <button onclick="router('intake')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition shadow">
+              <i data-lucide="plus" class="w-4 h-4"></i> New Intake Form
+            </button>
+          </header>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+              <h3 class="font-semibold text-white flex items-center gap-2">
+                <i data-lucide="users" class="w-4 h-4 text-indigo-400"></i> Patient Registry
+              </h3>
+              
+              <div class="relative w-72">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
+                <input type="text" id="patient-search" oninput="handleSearchInput()" placeholder="Search by name, ID, or phone..." 
+                       class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-8 py-2 text-sm text-white focus:outline-none focus:border-sky-500 transition">
+                <button id="search-clear-btn" onclick="clearSearch()" class="hidden absolute right-2 top-2 p-0.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800">
+                  <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead class="bg-slate-950/50 text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4 font-semibold">Patient ID</th>
+                    <th class="py-3 px-4 font-semibold">Name & Demographics</th>
+                    <th class="py-3 px-4 font-semibold">Recent Chief Complaint</th>
+                    <th class="py-3 px-4 font-semibold">Last Visit</th>
+                    <th class="py-3 px-4 font-semibold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-table-body" class="divide-y divide-slate-800/60 text-slate-300">
+                  </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+      populateDashboardTable(db.patients);
+    }
+
+    function handleSearchInput() {
+      const q = document.getElementById('patient-search').value.toLowerCase();
+      const btn = document.getElementById('search-clear-btn');
+      btn.classList.toggle('hidden', q.length === 0);
+      
+      const filtered = db.patients.filter(p => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.phone.includes(q));
+      populateDashboardTable(filtered);
+    }
+
+    function clearSearch() {
+      const input = document.getElementById('patient-search');
+      input.value = '';
+      input.focus();
+      handleSearchInput();
+    }
+
+    function populateDashboardTable(patientsList) {
+      const tbody = document.getElementById('dashboard-table-body');
+      if (patientsList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500">No patient records found.</td></tr>`;
+        return;
+      }
+      
+      tbody.innerHTML = patientsList.map(pt => {
+        // Find most recent case
+        const ptCases = db.consultations.filter(c => c.patientId === pt.id).sort((a,b) => new Date(b.date) - new Date(a.date));
+        const lastCase = ptCases[0];
+        
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-3 px-4 font-mono text-slate-400">${pt.id}</td>
+            <td class="py-3 px-4">
+              <div class="font-medium text-white">${pt.name}</div>
+              <div class="text-xs text-slate-500">${pt.age}y • ${pt.sex} • BG: ${pt.bloodGroup || 'N/A'}</div>
+            </td>
+            <td class="py-3 px-4 truncate max-w-[200px] text-slate-300">${lastCase ? lastCase.cc : '<span class="text-slate-600 italic">No consultations</span>'}</td>
+            <td class="py-3 px-4 text-slate-400 text-xs">${lastCase ? new Date(lastCase.date).toLocaleDateString() : 'N/A'}</td>
+            <td class="py-3 px-4 text-right space-x-2">
+              ${lastCase ? `<button onclick="router('case-record', {caseId: '${lastCase.id}'})" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700 transition">View Case</button>` : ''}
+              <button onclick="router('intake')" class="px-3 py-1.5 text-xs bg-sky-600 hover:bg-sky-500 text-white rounded transition shadow">New Visit</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+
+    // ============================================================================
+    // VIEW 2: MULTI-STEP INTAKE WIZARD
+    // ============================================================================
+    let currentStep = 1;
+    let painPoints = [];
+
+    function renderIntakeWizard(container) {
+      currentStep = 1;
+      painPoints = [];
+      
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto">
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-white">Structured Clinical Intake</h2>
+            <p class="text-sm text-slate-400">Complete the standardized case-taking form. Use Enter key to navigate fields.</p>
+            
+            <div class="flex items-center justify-between mt-6 relative">
+              <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-800 -z-10 rounded-full"></div>
+              ${[1,2,3,4].map(step => `
+                <div id="step-indicator-${step}" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-4 border-slate-950 ${step === 1 ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400'} transition-colors">
+                  ${step}
+                </div>
+              `).join('')}
+            </div>
+            <div class="flex justify-between text-[11px] font-semibold text-slate-500 uppercase mt-2 px-1">
+              <span>Demographics</span>
+              <span>Chief Complaint</span>
+              <span>Systemic Review</span>
+              <span>Physical Exam</span>
+            </div>
+          </div>
+
+          <form id="intake-form" onsubmit="saveIntakeForm(event)" class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl relative">
+            
+            <div id="wizard-step-1" class="wizard-step space-y-6 block">
+              <h3 class="text-base font-semibold text-white border-b border-slate-800 pb-2">1. Demographics & Vitals</h3>
+              
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Full Name *</label>
+                  <input type="text" id="f-name" required class="form-input w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500" placeholder="e.g. John Doe">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Age *</label>
+                  <input type="number" id="f-age" min="0" required class="form-input w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500" placeholder="Years">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Biological Sex *</label>
+                  <select id="f-sex" required class="form-input w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500">
+                    <option value="">Select...</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Blood Group</label>
+                  <select id="f-blood" class="form-input w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500">
+                    <option value="">Unknown</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+                  </select>
+                </div>
+                <div class="md:col-span-2">
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Emergency Contact</label>
+                  <input type="tel" id="f-phone" class="form-input w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500" placeholder="Phone Number">
+                </div>
+              </div>
+
+              <div class="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
+                <div class="flex justify-between items-center mb-3">
+                  <h4 class="text-sm font-semibold text-slate-200">Objective Vitals</h4>
+                  <div id="vitals-flags" class="flex gap-2"></div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Height (cm) [30-350]</label>
+                    <input type="number" id="v-height" min="30" max="350" class="form-input w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:border-sky-500" oninput="calculateVitals()">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Weight (kg)</label>
+                    <input type="number" id="v-weight" min="0" step="0.1" class="form-input w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:border-sky-500" oninput="calculateVitals()">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Temp (°C)</label>
+                    <input type="number" id="v-temp" min="0" step="0.1" class="form-input w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:border-sky-500" oninput="calculateVitals()">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Pulse (bpm)</label>
+                    <input type="number" id="v-hr" min="0" class="form-input w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:border-sky-500" oninput="calculateVitals()">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Sys BP (mmHg)</label>
+                    <input type="number" id="v-sbp" min="0" class="form-input w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:border-sky-500">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Dia BP (mmHg)</label>
+                    <input type="number" id="v-dbp" min="0" class="form-input w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:border-sky-500">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Resp Rate (/min)</label>
+                    <input type="number" id="v-rr" min="0" class="form-input w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:border-sky-500">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">SpO2 (%)</label>
+                    <input type="number" id="v-spo2" min="0" max="100" class="form-input w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:border-sky-500">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="wizard-step-2" class="wizard-step space-y-6 hidden">
+              <h3 class="text-base font-semibold text-white border-b border-slate-800 pb-2">2. Chief Complaint & Timeline</h3>
+              
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Primary Chief Complaint (CC) *</label>
+                <input type="text" id="f-cc" required class="form-input w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500" placeholder="e.g. Throbbing pain in right temple">
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Onset Date/Time</label>
+                  <input type="text" id="f-onset" class="form-input w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500" placeholder="e.g. Sudden onset 3 hours ago">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Duration (Days)</label>
+                  <input type="number" id="f-duration" min="0" class="form-input w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500" placeholder="e.g. 3">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Aggravating Factors (Worse with)</label>
+                  <textarea id="f-aggravates" rows="2" class="form-textarea w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Ameliorating Factors (Better with)</label>
+                  <textarea id="f-ameliorates" rows="2" class="form-textarea w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div id="wizard-step-3" class="wizard-step space-y-6 hidden">
+              <h3 class="text-base font-semibold text-white border-b border-slate-800 pb-2">3. Historical & Systemic Review</h3>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Past Medical & Surgical History</label>
+                  <textarea id="f-pmhx" rows="4" class="form-textarea w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500" placeholder="Chronic conditions, past surgeries..."></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Family & Social History</label>
+                  <textarea id="f-fhx" rows="4" class="form-textarea w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500" placeholder="Hereditary diseases, smoking, alcohol..."></textarea>
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Review of Systems (ROS)</label>
+                <textarea id="f-ros" rows="3" class="form-textarea w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500" placeholder="Checklist of symptoms across organ systems..."></textarea>
+              </div>
+            </div>
+
+            <div id="wizard-step-4" class="wizard-step space-y-6 hidden">
+              <h3 class="text-base font-semibold text-white border-b border-slate-800 pb-2">4. Physical Findings & Modalities</h3>
+              
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div class="md:col-span-7 space-y-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">General Appearance & Physical Exam</label>
+                    <textarea id="f-exam" rows="6" class="form-textarea w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500" placeholder="Alert, oriented. HEENT normal. Heart regular rate and rhythm..."></textarea>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Current Medications & Allergies</label>
+                    <textarea id="f-meds" rows="3" class="form-textarea w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-sky-500"></textarea>
+                  </div>
+                </div>
+                
+                <div class="md:col-span-5 bg-slate-950 rounded-xl p-4 border border-slate-800 text-center">
+                  <label class="block text-xs font-semibold text-slate-400 mb-2">2D Body Map (Click to add pain markers)</label>
+                  <div id="body-map-container" onclick="addPainPoint(event)">
+                    </div>
+                  <button type="button" onclick="clearPainPoints()" class="mt-3 text-[11px] text-rose-400 hover:text-rose-300">Clear Markers</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-8 pt-4 border-t border-slate-800 flex justify-between">
+              <button type="button" id="btn-prev" onclick="changeStep(-1)" class="invisible px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition">Back</button>
+              <button type="button" id="btn-next" onclick="changeStep(1)" class="px-6 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg font-medium transition shadow">Next Step</button>
+              <button type="submit" id="btn-submit" class="hidden px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition shadow">Finalize & Generate SOAP</button>
+            </div>
+          </form>
+        </div>
+      `;
+      
+      // Global Enter Key Listener for Form Ergonomics
+      const form = document.getElementById('intake-form');
+      form.addEventListener('keydown', handleFormKeydown);
+    }
+
+    // --- FORM UX & NAVIGATION ---
+    function handleFormKeydown(e) {
+      if (e.key === 'Enter') {
+        const target = e.target;
+        // Ignore textareas (allow multiline) and buttons
+        if (target.tagName === 'TEXTAREA' || target.tagName === 'BUTTON') return;
+        
+        e.preventDefault();
+        
+        // Find all interactable elements within the current visible step
+        const stepDiv = document.getElementById(`wizard-step-${currentStep}`);
+        const interactables = Array.from(stepDiv.querySelectorAll('input:not([type="hidden"]), select, textarea'));
+        
+        const currentIndex = interactables.indexOf(target);
+        if (currentIndex > -1) {
+          // Look for next blank input, or just next input
+          for (let i = currentIndex + 1; i < interactables.length; i++) {
+            const nextEl = interactables[i];
+            if (!nextEl.disabled && (nextEl.value === '' || nextEl.tagName === 'SELECT')) {
+              nextEl.focus();
+              return;
+            }
+          }
+          // If no blank inputs found ahead, focus the immediate next one anyway
+          if (currentIndex + 1 < interactables.length) {
+            interactables[currentIndex + 1].focus();
+          } else {
+             // Reached end of current step, optionally trigger next step button
+             document.getElementById('btn-next')?.focus();
+          }
+        }
+      }
+    }
+
+    function changeStep(dir) {
+      // Basic HTML5 validation trigger for current step
+      const stepDiv = document.getElementById(`wizard-step-${currentStep}`);
+      const inputs = stepDiv.querySelectorAll('input[required], select[required], textarea[required]');
+      for(let input of inputs) {
+        if(!input.reportValidity()) return;
+      }
+
+      document.getElementById(`wizard-step-${currentStep}`).classList.add('hidden');
+      document.getElementById(`step-indicator-${currentStep}`).classList.remove('bg-sky-500', 'text-white');
+      document.getElementById(`step-indicator-${currentStep}`).classList.add('bg-slate-800', 'text-slate-400');
+      
+      currentStep += dir;
+      
+      document.getElementById(`wizard-step-${currentStep}`).classList.remove('hidden');
+      document.getElementById(`step-indicator-${currentStep}`).classList.remove('bg-slate-800', 'text-slate-400');
+      document.getElementById(`step-indicator-${currentStep}`).classList.add('bg-sky-500', 'text-white');
+
+      document.getElementById('btn-prev').classList.toggle('invisible', currentStep === 1);
+      
+      if (currentStep === 4) {
+        document.getElementById('btn-next').classList.add('hidden');
+        document.getElementById('btn-submit').classList.remove('hidden');
+      } else {
+        document.getElementById('btn-next').classList.remove('hidden');
+        document.getElementById('btn-submit').classList.add('hidden');
+      }
+      
+      // Auto-focus first input of new step
+      setTimeout(() => {
+        const firstInput = document.getElementById(`wizard-step-${currentStep}`).querySelector('input, select');
+        if (firstInput) firstInput.focus();
+      }, 50);
+    }
+
+    // --- CLINICAL ALGORITHMS & VITALS ---
+    function calculateVitals() {
+      const h = parseFloat(document.getElementById('v-height').value);
+      const w = parseFloat(document.getElementById('v-weight').value);
+      const temp = parseFloat(document.getElementById('v-temp').value);
+      const hr = parseFloat(document.getElementById('v-hr').value);
+      
+      const flagsDiv = document.getElementById('vitals-flags');
+      let flags = [];
+      let flagHTML = '';
+
+      // BMI Logic
+      if (h >= 30 && h <= 350 && w > 0) {
+        const hm = h / 100;
+        const bmi = w / (hm * hm);
+        let status = '';
+        let color = '';
+        if (bmi < 18.5) { status = 'Underweight'; color = 'bg-amber-500/20 text-amber-400'; }
+        else if (bmi >= 18.5 && bmi < 25.0) { status = 'Normal'; color = 'bg-emerald-500/20 text-emerald-400'; }
+        else if (bmi >= 25.0 && bmi < 30.0) { status = 'Overweight'; color = 'bg-amber-500/20 text-amber-400'; }
+        else if (bmi >= 30.0) { status = 'Obese'; color = 'bg-rose-500/20 text-rose-400'; }
+        flagHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold border border-current ${color}">BMI: ${bmi.toFixed(1)} (${status})</span>`;
+      }
+
+      // Fever Threshold (>= 37.2 C)
+      if (temp >= 37.2) {
+        flagHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/50">Fever / Pyrexia</span>`;
+      }
+
+      // Heart Rate Logic
+      if (hr > 100) {
+        flagHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/50">Tachycardia</span>`;
+      } else if (hr > 0 && hr < 60) {
+        flagHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-400 border border-sky-500/50">Bradycardia</span>`;
+      }
+
+      flagsDiv.innerHTML = flagHTML;
+    }
+
+    // --- BODY MAP LOGIC ---
+    function addPainPoint(e) {
+      const rect = e.target.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const pin = document.createElement('div');
+      pin.className = 'pain-pin';
+      pin.style.left = `${x}px`;
+      pin.style.top = `${y}px`;
+      
+      document.getElementById('body-map-container').appendChild(pin);
+      painPoints.push({x: (x/rect.width).toFixed(3), y: (y/rect.height).toFixed(3)});
+    }
+    
+    function clearPainPoints() {
+      const container = document.getElementById('body-map-container');
+      const pins = container.querySelectorAll('.pain-pin');
+      pins.forEach(p => p.remove());
+      painPoints = [];
+    }
+
+    // --- DATA SUBMISSION ---
+    function saveIntakeForm(e) {
+      e.preventDefault();
+      
+      // Patient Demographics Update/Insert
+      const ptData = {
+        id: `PT-${Math.floor(1000 + Math.random()*9000)}`,
+        name: document.getElementById('f-name').value,
+        age: document.getElementById('f-age').value,
+        sex: document.getElementById('f-sex').value,
+        bloodGroup: document.getElementById('f-blood').value,
+        phone: document.getElementById('f-phone').value,
+        height: document.getElementById('v-height').value,
+        weight: document.getElementById('v-weight').value
+      };
+      
+      db.patients.push(ptData);
+
+      // Collect flags text from UI
+      const flagSpans = document.getElementById('vitals-flags').querySelectorAll('span');
+      const flagsList = Array.from(flagSpans).map(s => s.innerText);
+
+      // Construct Consultation Record
+      const caseData = {
+        id: `CS-${Math.floor(1000 + Math.random()*9000)}`,
+        patientId: ptData.id,
+        date: new Date().toISOString(),
+        cc: document.getElementById('f-cc').value,
+        onset: document.getElementById('f-onset').value,
+        duration: document.getElementById('f-duration').value,
+        aggravates: document.getElementById('f-aggravates').value,
+        ameliorates: document.getElementById('f-ameliorates').value,
+        pmhx: document.getElementById('f-pmhx').value,
+        fhx: document.getElementById('f-fhx').value,
+        ros: document.getElementById('f-ros').value,
+        exam: document.getElementById('f-exam').value,
+        meds: document.getElementById('f-meds').value,
+        vitals: {
+          temp: document.getElementById('v-temp').value,
+          hr: document.getElementById('v-hr').value,
+          sbp: document.getElementById('v-sbp').value,
+          dbp: document.getElementById('v-dbp').value,
+          rr: document.getElementById('v-rr').value,
+          spo2: document.getElementById('v-spo2').value
+        },
+        flags: flagsList,
+        painMarkers: painPoints,
+        soap: '' // Will be generated
+      };
+
+      // Generate Automated SOAP Note (Simulated AI)
+      caseData.soap = generateSOAP(ptData, caseData);
+      
+      db.consultations.push(caseData);
+      saveData();
+      
+      router('case-record', { caseId: caseData.id });
+    }
+
+    function generateSOAP(pt, c) {
+      const v = c.vitals;
+      const subjective = `${pt.age}yo ${pt.sex} presents with CC: "${c.cc}". Onset: ${c.onset || 'N/A'}, Duration: ${c.duration || 'N/A'} days. ` + 
+                         (c.aggravates ? `Worsened by ${c.aggravates}. ` : '') + (c.ameliorates ? `Relieved by ${c.ameliorates}. ` : '') +
+                         `ROS: ${c.ros || 'Unremarkable'}.`;
+      
+      const vitalsStr = [
+        v.temp ? `T ${v.temp}°C` : '', v.hr ? `HR ${v.hr}` : '', 
+        (v.sbp && v.dbp) ? `BP ${v.sbp}/${v.dbp}` : '', v.spo2 ? `SpO2 ${v.spo2}%` : ''
+      ].filter(Boolean).join(', ');
+
+      const objective = `Vitals: ${vitalsStr || 'Not recorded'}. \nPhysical Exam: ${c.exam || 'No acute distress.'} \nPain Markers: ${c.painMarkers.length} recorded on body map.`;
+      const assessment = `Clinical Impression based on presentation: Acute ${c.cc.split(' ')[0] || 'Condition'}. \nFlags: ${c.flags.join(' | ') || 'None'}`;
+      const plan = `1. Clinical correlation required.\n2. Recommend diagnostic review.\n3. Symptomatic management pending tests.`;
+      
+      return `S: ${subjective}\n\nO: ${objective}\n\nA: ${assessment}\n\nP: ${plan}`;
+    }
+
+
+    // ============================================================================
+    // VIEW 3: CASE RECORD (EXPORT / DASHBOARD)
+    // ============================================================================
+    function renderCaseRecord(container, caseId) {
+      const record = db.consultations.find(c => c.id === caseId);
+      const pt = db.patients.find(p => p.id === record.patientId);
+      
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto print-box">
+          
+          <div class="flex justify-between items-start mb-6 border-b border-slate-800 pb-4 no-print">
+            <div>
+              <h2 class="text-2xl font-bold text-white flex items-center gap-2"><i data-lucide="file-text" class="w-6 h-6 text-sky-400"></i> Clinical Case Record</h2>
+              <p class="text-sm text-slate-400">Record ID: ${record.id} | Generated on ${new Date(record.date).toLocaleString()}</p>
+            </div>
+            <button id="export-btn" onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition border border-slate-700 flex items-center gap-2">
+              <i data-lucide="printer" class="w-4 h-4"></i> Export / Print
+            </button>
+          </div>
+
+          <div class="hidden print:block text-center mb-6 border-b border-gray-300 pb-4">
+            <h1 class="text-2xl font-bold font-serif">AetherCase Medical Center</h1>
+            <p class="text-sm">Dr. Aris Vance, Internal Medicine</p>
+            <p class="text-sm text-gray-500">Official Clinical Record</p>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 mb-6 flex flex-wrap justify-between text-sm shadow-sm print-box">
+            <div><span class="text-slate-500 text-xs block uppercase font-bold">Patient Name</span> <span class="text-white font-medium text-base">${pt.name}</span></div>
+            <div><span class="text-slate-500 text-xs block uppercase font-bold">MRN / ID</span> <span class="text-slate-300 font-mono">${pt.id}</span></div>
+            <div><span class="text-slate-500 text-xs block uppercase font-bold">Age/Sex</span> <span class="text-slate-300">${pt.age} yrs, ${pt.sex}</span></div>
+            <div><span class="text-slate-500 text-xs block uppercase font-bold">Blood Group</span> <span class="text-rose-400 font-bold">${pt.bloodGroup || 'N/A'}</span></div>
+            <div><span class="text-slate-500 text-xs block uppercase font-bold">Encounter Date</span> <span class="text-slate-300">${new Date(record.date).toLocaleDateString()}</span></div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="space-y-6">
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 print-box">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3 flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i> Objective Vitals</h4>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                  <div><span class="text-slate-500">HR:</span> <span class="text-white font-mono">${record.vitals.hr || '--'}</span></div>
+                  <div><span class="text-slate-500">BP:</span> <span class="text-white font-mono">${record.vitals.sbp || '--'}/${record.vitals.dbp || '--'}</span></div>
+                  <div><span class="text-slate-500">Temp:</span> <span class="text-white font-mono">${record.vitals.temp || '--'}°C</span></div>
+                  <div><span class="text-slate-500">SpO2:</span> <span class="text-white font-mono">${record.vitals.spo2 || '--'}%</span></div>
+                  <div><span class="text-slate-500">RR:</span> <span class="text-white font-mono">${record.vitals.rr || '--'}</span></div>
+                  <div><span class="text-slate-500">Height:</span> <span class="text-white font-mono">${pt.height || '--'}cm</span></div>
+                </div>
+                <div class="mt-3 space-y-1">
+                  ${record.flags.map(f => `<span class="inline-block px-2 py-0.5 mr-1 mb-1 rounded text-[10px] font-bold border border-current text-amber-400 bg-amber-500/10">${f}</span>`).join('')}
+                </div>
+              </div>
+
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 print-box">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">History & Modalities</h4>
+                <div class="text-sm space-y-3">
+                  <div><strong class="text-slate-500 block text-xs">PMHx:</strong> <span class="text-slate-300">${record.pmhx || 'None noted'}</span></div>
+                  <div><strong class="text-slate-500 block text-xs">Allergies/Meds:</strong> <span class="text-slate-300">${record.meds || 'None noted'}</span></div>
+                  <div><strong class="text-slate-500 block text-xs">Aggravates:</strong> <span class="text-slate-300">${record.aggravates || '--'}</span></div>
+                  <div><strong class="text-slate-500 block text-xs">Ameliorates:</strong> <span class="text-slate-300">${record.ameliorates || '--'}</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="md:col-span-2">
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-inner print-box h-full">
+                <div class="flex justify-between items-center mb-4">
+                  <h3 class="text-sm font-bold text-sky-400 uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="cpu" class="w-4 h-4"></i> AI-Synthesized SOAP Note
+                  </h3>
+                </div>
+                <pre class="whitespace-pre-wrap text-sm text-slate-200 font-sans leading-relaxed">${record.soap}</pre>
+                
+                <div class="mt-6 pt-4 border-t border-slate-800">
+                  <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-2"><i data-lucide="pill" class="w-4 h-4"></i> Draft Prescription</h4>
+                  <textarea rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-300 text-sm focus:border-emerald-500" placeholder="Medication, Dosage, Frequency, Instructions..."></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      lucide.createIcons();
+    }
+
+    // Initialize application
+    window.addEventListener('DOMContentLoaded', () => { router('dashboard'); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AegisCare AI - Clinical Case-Taking & Triage Decision Support</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef8ff',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbars for EHR feel */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+  </style>
+</head>
+<body class="h-full flex overflow-hidden font-sans antialiased text-sm">
+
+  <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0">
+    <div>
+      <div class="h-16 flex items-center px-6 border-b border-slate-800 gap-3">
+        <div class="p-2 bg-sky-600 rounded-lg text-white shadow-md shadow-sky-600/30">
+          <i data-lucide="activity" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-base tracking-wide text-white">AegisCare <span class="text-sky-400">CDS</span></h1>
+          <p class="text-[11px] text-slate-400">Clinical Intelligence Suite</p>
+        </div>
+      </div>
+
+      <nav class="p-3 space-y-1">
+        <button onclick="router('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800/80 hover:text-white transition">
+          <i data-lucide="layout-dashboard" class="w-4 h-4 text-sky-400"></i>
+          <span class="font-medium">Triage Dashboard</span>
+        </button>
+        <button onclick="router('intake')" id="nav-intake" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800/80 hover:text-white transition">
+          <i data-lucide="clipboard-plus" class="w-4 h-4 text-emerald-400"></i>
+          <span class="font-medium">New Intake Encounter</span>
+        </button>
+        <button onclick="router('patients')" id="nav-patients" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800/80 hover:text-white transition">
+          <i data-lucide="users" class="w-4 h-4 text-indigo-400"></i>
+          <span class="font-medium">Patient Directory</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="p-4 border-t border-slate-800 bg-slate-900/50">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-semibold text-slate-200">
+          DR
+        </div>
+        <div class="truncate">
+          <p class="text-xs font-semibold text-white">Dr. Aris Vance, MD</p>
+          <p class="text-[11px] text-slate-400">Attending Emergentologist</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="flex-1 flex flex-col overflow-hidden bg-slate-950">
+    
+    <header class="h-16 bg-slate-900/60 border-b border-slate-800/80 px-8 flex items-center justify-between shrink-0 backdrop-blur">
+      <div class="flex items-center gap-4">
+        <h2 id="view-title" class="text-lg font-semibold text-white">Triage Overview & Real-Time Monitoring</h2>
+        <span class="px-2 py-0.5 text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          AI Inference Active
+        </span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="seedInitialData()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white border border-slate-700 rounded-lg hover:bg-slate-800 transition">
+          Reload Mock Data
+        </button>
+      </div>
+    </header>
+
+    <div id="content-container" class="flex-1 overflow-y-auto p-8">
+      </div>
+  </main>
+
+  <div id="patient-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-4xl max-h-[90vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+      <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/80">
+        <div>
+          <h3 id="modal-patient-name" class="font-bold text-white text-base">Patient Medical Record</h3>
+          <p id="modal-patient-meta" class="text-xs text-slate-400">MRN: --- | Age: --</p>
+        </div>
+        <button onclick="closeModal()" class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div id="modal-body" class="p-6 overflow-y-auto space-y-6 text-xs leading-relaxed text-slate-300">
+        </div>
+    </div>
+  </div>
+
+  <script>
+    // System Storage Key
+    const DB_KEY = 'aegis_patients_db';
+
+    // Mock initial dataset representing diverse triage emergencies
+    const initialDataset = [
+      {
+        id: "PT-9042",
+        name: "Eleanor Sterling",
+        age: 64,
+        gender: "Female",
+        chiefComplaint: "Crushing retrosternal chest pain with left arm radiation and diaphoresis.",
+        hpi: "Onset 2 hours ago while resting. Rated 8/10 on pain scale. Associated with nausea and mild dyspnea. Has taken 1 tablet sublingual nitroglycerin with minimal relief.",
+        allergies: "Penicillin (Anaphylaxis), Aspirin",
+        medications: "Atorvastatin 40mg, Metoprolol 50mg, Lisinopril 10mg",
+        pmhx: "CAD s/p Stent (2018), Type 2 Diabetes, Hypertension",
+        ros: "Positive for chest pressure, shortness of breath, diaphoresis. Negative for syncope, cough, or hemoptysis.",
+        vitals: { hr: 112, sbp: 88, dbp: 54, rr: 24, spo2: 91, temp: 37.1 },
+        timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
+        analysis: {
+          esiLevel: 1,
+          mewsScore: 5,
+          urgency: "Immediate / Resuscitation",
+          differential: [
+            { condition: "ST-Elevation Myocardial Infarction (STEMI)", probability: 88 },
+            { condition: "Acute Aortic Dissection", probability: 8 },
+            { condition: "Massive Pulmonary Embolism", probability: 4 }
+          ],
+          redFlags: ["Hypotension (SBP < 90)", "Unresolved Angina", "Tachycardia", "Hypoxia (SpO2 91%)"],
+          recommendedOrders: ["STAT 12-Lead ECG", "High-Sensitivity Troponin I", "Portable Chest X-Ray", "Dual Peripheral Large-Bore IVs"],
+          soapNote: "S: 64yo female presents with acute severe chest pain radiating to left arm with diaphoresis.\nO: Ill-appearing, diaphoretic. BP 88/54, HR 112, RR 24, SpO2 91% on room air.\nA: Probable Acute Coronary Syndrome / STEMI complicated by cardiogenic shock/hypotension.\nP: Immediate 12-Lead ECG, Aspirin protocol verification, prepare cardiac catheterization lab activation."
+        }
+      },
+      {
+        id: "PT-9043",
+        name: "Marcus Holloway",
+        age: 27,
+        gender: "Male",
+        chiefComplaint: "Acute wheezing, shortness of breath, audible stridor post peanut exposure.",
+        hpi: "Symptoms began 25 minutes ago following accidental ingestion of a pastry. Experiencing globus sensation in throat and urticaria on torso.",
+        allergies: "Peanuts, Tree Nuts",
+        medications: "Albuterol inhaler PRN",
+        pmhx: "Atopic Asthma",
+        ros: "Respiratory distress, hives, tightness in throat. Denies fever.",
+        vitals: { hr: 125, sbp: 105, dbp: 68, rr: 28, spo2: 93, temp: 36.8 },
+        timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
+        analysis: {
+          esiLevel: 1,
+          mewsScore: 4,
+          urgency: "Immediate / Resuscitation",
+          differential: [
+            { condition: "Severe Anaphylaxis with Airway Compromise", probability: 94 },
+            { condition: "Status Asthmaticus", probability: 6 }
+          ],
+          redFlags: ["Airway Laryngeal Edema/Stridor", "Tachypnea (RR 28)", "Marked Tachycardia"],
+          recommendedOrders: ["Intramuscular Epinephrine 0.3mg (1:1000) STAT", "IV Diphenhydramine 50mg", "IV Methylprednisolone 125mg", "Nebulized Albuterol"],
+          soapNote: "S: 27yo male with acute anaphylaxis following peanut ingestion with upper airway compromise.\nO: Stridor, diffuse expiratory wheezing, extensive urticaria. SpO2 93%, RR 28, HR 125.\nA: Anaphylactic shock.\nP: Administer IM Epinephrine immediately into anterolateral thigh, high-flow oxygen, airway prep."
+        }
+      },
+      {
+        id: "PT-9044",
+        name: "Julia Chen",
+        age: 42,
+        gender: "Female",
+        chiefComplaint: "Right lower quadrant abdominal pain for 18 hours, fever, anorexia.",
+        hpi: "Began as periumbilical dull ache yesterday afternoon, has now migrated to the right iliac fossa. Pain worsens with ambulation or coughing. One episode of non-bilious emesis.",
+        allergies: "NKDA (No Known Drug Allergies)",
+        medications: "Oral Contraceptive Pill",
+        pmhx: "None",
+        ros: "Fever, nausea, RLQ pain. Denies hematochezia, dysuria, or vaginal bleeding.",
+        vitals: { hr: 92, sbp: 128, dbp: 82, rr: 18, spo2: 99, temp: 38.6 },
+        timestamp: new Date(Date.now() - 120 * 60000).toISOString(),
+        analysis: {
+          esiLevel: 3,
+          mewsScore: 1,
+          urgency: "Urgent",
+          differential: [
+            { condition: "Acute Appendicitis", probability: 82 },
+            { condition: "Ovarian Cyst Rupture / Torsion", probability: 11 },
+            { condition: "Mesenteric Adenitis", probability: 7 }
+          ],
+          redFlags: ["Peritoneal Sign Migration (McBurney's Point tenderness)", "Pyrexia (38.6 C)"],
+          recommendedOrders: ["CT Abdomen/Pelvis with IV Contrast", "Complete Blood Count (CBC) with diff", "Serum beta-hCG", "IV Hydration"],
+          soapNote: "S: 42yo female presenting with migratory RLQ pain, low-grade fever, and anorexia.\nO: Febrile (38.6°C). Tenderness at McBurney's point with rebound. Normal vitals otherwise.\nA: Highly suspicious for acute appendicitis.\nP: NPO, IV fluid resuscitation, emergent ultrasound/CT abdomen, surgical consultation."
+        }
+      }
+    ];
+
+    // State initialization
+    function getPatients() {
+      const stored = localStorage.getItem(DB_KEY);
+      if (!stored) {
+        localStorage.setItem(DB_KEY, JSON.stringify(initialDataset));
+        return initialDataset;
+      }
+      return JSON.parse(stored);
+    }
+
+    function savePatients(patients) {
+      localStorage.setItem(DB_KEY, JSON.stringify(patients));
+    }
+
+    function seedInitialData() {
+      localStorage.setItem(DB_KEY, JSON.stringify(initialDataset));
+      router(currentView);
+    }
+
+    let currentView = 'dashboard';
+
+    // Router controller
+    function router(view) {
+      currentView = view;
+      const container = document.getElementById('content-container');
+      const title = document.getElementById('view-title');
+
+      // Update Nav active style
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-slate-800', 'text-white');
+        btn.classList.add('text-slate-300');
+      });
+      const activeBtn = document.getElementById(`nav-${view}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-slate-800', 'text-white');
+      }
+
+      if (view === 'dashboard') {
+        title.innerText = "Triage Overview & Real-Time Monitoring";
+        container.innerHTML = renderDashboardView();
+      } else if (view === 'intake') {
+        title.innerText = "Clinical Patient Intake & CDS Assistant";
+        container.innerHTML = renderIntakeView();
+        attachFormListeners();
+      } else if (view === 'patients') {
+        title.innerText = "Active Hospital Registry & Patient Records";
+        container.innerHTML = renderPatientsView();
+      }
+      lucide.createIcons();
+    }
+
+    // ==================== VIEWS ====================
+
+    // 1. Dashboard View
+    function renderDashboardView() {
+      const patients = getPatients();
+      const criticalCount = patients.filter(p => p.analysis.esiLevel <= 2).length;
+      const avgMews = (patients.reduce((acc, p) => acc + p.analysis.mewsScore, 0) / (patients.length || 1)).toFixed(1);
+
+      return `
+        <div class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs uppercase font-semibold">Triage Volume</span>
+                <i data-lucide="users" class="w-4 h-4 text-sky-400"></i>
+              </div>
+              <div class="text-2xl font-bold text-white">${patients.length}</div>
+              <p class="text-[11px] text-slate-500 mt-1">Active registered encounters</p>
+            </div>
+            
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs uppercase font-semibold">Critical / High Acuity</span>
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500"></i>
+              </div>
+              <div class="text-2xl font-bold text-rose-400">${criticalCount}</div>
+              <p class="text-[11px] text-slate-500 mt-1">ESI Level 1 & 2 requiring immediate bed</p>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs uppercase font-semibold">Mean MEWS Acuity</span>
+                <i data-lucide="gauge" class="w-4 h-4 text-amber-400"></i>
+              </div>
+              <div class="text-2xl font-bold text-amber-400">${avgMews}</div>
+              <p class="text-[11px] text-slate-500 mt-1">Physiological risk baseline</p>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs uppercase font-semibold">CDS Heuristic Engine</span>
+                <i data-lucide="cpu" class="w-4 h-4 text-emerald-400"></i>
+              </div>
+              <div class="text-2xl font-bold text-emerald-400">Online</div>
+              <p class="text-[11px] text-slate-500 mt-1">Inference latency &lt; 40ms</p>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center">
+              <div>
+                <h3 class="font-semibold text-white">Active Triage Priority Queue</h3>
+                <p class="text-xs text-slate-400">Ranked dynamically by ESI score and vital severity</p>
+              </div>
+              <button onclick="router('intake')" class="bg-sky-600 hover:bg-sky-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-2 transition shadow">
+                <i data-lucide="plus" class="w-4 h-4"></i> New Intake
+              </button>
+            </div>
+            <div class="divide-y divide-slate-800/60 overflow-x-auto">
+              ${renderQueueTable(patients)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderQueueTable(patients) {
+      // Sort patients: lower ESI level (1 is most critical) first, then higher MEWS
+      const sorted = [...patients].sort((a, b) => a.analysis.esiLevel - b.analysis.esiLevel || b.analysis.mewsScore - a.analysis.mewsScore);
+
+      if (sorted.length === 0) {
+        return `<div class="p-8 text-center text-slate-500">No active encounters found in queue.</div>`;
+      }
+
+      return sorted.map(pt => {
+        let badgeColor = "bg-slate-700 text-slate-300";
+        if (pt.analysis.esiLevel === 1) badgeColor = "bg-rose-500/10 text-rose-400 border border-rose-500/30 animate-pulse";
+        else if (pt.analysis.esiLevel === 2) badgeColor = "bg-amber-500/10 text-amber-400 border border-amber-500/30";
+        else if (pt.analysis.esiLevel === 3) badgeColor = "bg-sky-500/10 text-sky-400 border border-sky-500/30";
+
+        return `
+          <div class="p-4 hover:bg-slate-850 flex items-center justify-between gap-4 transition">
+            <div class="flex items-center gap-3 min-w-[220px]">
+              <span class="px-2.5 py-1 rounded text-xs font-bold ${badgeColor}">
+                ESI ${pt.analysis.esiLevel}
+              </span>
+              <div>
+                <h4 class="font-semibold text-white cursor-pointer hover:underline" onclick="openModal('${pt.id}')">${pt.name}</h4>
+                <p class="text-[11px] text-slate-400">${pt.age}y, ${pt.gender} • <span class="font-mono text-slate-300">${pt.id}</span></p>
+              </div>
+            </div>
+
+            <div class="flex-1 max-w-md hidden md:block">
+              <p class="text-xs text-slate-300 truncate"><span class="text-slate-500">Chief Complaint:</span> ${pt.chiefComplaint}</p>
+              <p class="text-[11px] text-slate-500 truncate mt-0.5">Top AI Impression: <span class="text-sky-300">${pt.analysis.differential[0]?.condition || 'Pending'}</span></p>
+            </div>
+
+            <div class="hidden lg:flex items-center gap-3 text-[11px] font-mono text-slate-400">
+              <span class="${pt.vitals.hr > 100 || pt.vitals.hr < 50 ? 'text-amber-400 font-bold' : ''}">HR: ${pt.vitals.hr}</span>
+              <span class="${pt.vitals.sbp < 90 ? 'text-rose-400 font-bold' : ''}">BP: ${pt.vitals.sbp}/${pt.vitals.dbp}</span>
+              <span class="${pt.vitals.spo2 < 94 ? 'text-rose-400 font-bold' : ''}">SpO2: ${pt.vitals.spo2}%</span>
+              <span>MEWS: <strong class="text-white">${pt.analysis.mewsScore}</strong></span>
+            </div>
+
+            <div>
+              <button onclick="openModal('${pt.id}')" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition border border-slate-700">
+                View EMR Chart
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 2. Intake Form & Live CDS Analysis View
+    function renderIntakeView() {
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div class="lg:col-span-7 space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
+              <div class="flex justify-between items-center mb-6">
+                <div>
+                  <h3 class="font-bold text-white text-base">Comprehensive Clinical Intake</h3>
+                  <p class="text-xs text-slate-400">Demographics, Objective Vitals, and Narrative HPI</p>
+                </div>
+                <button type="button" onclick="fillSampleTrauma()" class="text-xs text-sky-400 hover:underline">
+                  Load Acute Sepsis Sample
+                </button>
+              </div>
+
+              <form id="intake-form" onsubmit="handleIntakeSubmit(event)" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Full Legal Name *</label>
+                    <input type="text" id="pt-name" required placeholder="John Doe" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Age *</label>
+                    <input type="number" id="pt-age" required min="0" max="125" placeholder="48" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Biological Sex *</label>
+                    <select id="pt-gender" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Baseline Physiological Vitals</label>
+                    <span class="text-[10px] text-slate-500">Real-time MEWS recalculation enabled</span>
+                  </div>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                    <div>
+                      <span class="text-[11px] text-slate-400 block mb-1">HR (bpm)</span>
+                      <input type="number" id="vital-hr" value="78" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:border-sky-500">
+                    </div>
+                    <div>
+                      <span class="text-[11px] text-slate-400 block mb-1">Sys BP</span>
+                      <input type="number" id="vital-sbp" value="122" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:border-sky-500">
+                    </div>
+                    <div>
+                      <span class="text-[11px] text-slate-400 block mb-1">Dia BP</span>
+                      <input type="number" id="vital-dbp" value="80" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:border-sky-500">
+                    </div>
+                    <div>
+                      <span class="text-[11px] text-slate-400 block mb-1">RR (/min)</span>
+                      <input type="number" id="vital-rr" value="16" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:border-sky-500">
+                    </div>
+                    <div>
+                      <span class="text-[11px] text-slate-400 block mb-1">SpO2 (%)</span>
+                      <input type="number" id="vital-spo2" value="98" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:border-sky-500">
+                    </div>
+                    <div>
+                      <span class="text-[11px] text-slate-400 block mb-1">Temp (°C)</span>
+                      <input type="number" step="0.1" id="vital-temp" value="36.8" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:border-sky-500">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Chief Complaint (Presenting Problem) *</label>
+                    <input type="text" id="pt-complaint" required placeholder="e.g. Severe throbbing headache, blurred vision, stiff neck" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:border-sky-500">
+                  </div>
+                  <div>
+                    <div class="flex justify-between items-center mb-1">
+                      <label class="block text-xs font-semibold text-slate-300">History of Present Illness (HPI Narrative) *</label>
+                      <button type="button" onclick="simulateVoiceDictation()" class="text-[11px] text-sky-400 hover:text-sky-300 flex items-center gap-1">
+                        <i data-lucide="mic" class="w-3.5 h-3.5"></i> Dictate Voice
+                      </button>
+                    </div>
+                    <textarea id="pt-hpi" rows="3" required placeholder="Describe onset, duration, character, radiation, severity, aggravating/alleviating factors..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:border-sky-500"></textarea>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Past Medical History (PMHx)</label>
+                    <input type="text" id="pt-pmhx" placeholder="Hypertension, Asthma, CKD" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:border-sky-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Allergies</label>
+                    <input type="text" id="pt-allergies" placeholder="e.g. NKDA or Penicillin, Sulfa" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:border-sky-500">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Current Outpatient Medications</label>
+                    <input type="text" id="pt-meds" placeholder="Metformin 500mg, Lisinopril 20mg" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:border-sky-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Review of Systems (ROS)</label>
+                    <input type="text" id="pt-ros" placeholder="Denies fever, positive for chills, nausea" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:border-sky-500">
+                  </div>
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                  <button type="submit" class="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-medium py-2.5 px-4 rounded-lg transition shadow flex items-center justify-center gap-2">
+                    <i data-lucide="check-circle-2" class="w-4 h-4"></i> Finalize Intake & Admit to Triage
+                  </button>
+                  <button type="button" onclick="triggerManualInference()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2.5 rounded-lg transition border border-slate-700">
+                    Refresh AI Preview
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5 space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 sticky top-4">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="sparkles" class="w-4 h-4 text-sky-400"></i>
+                  <h4 class="font-bold text-white text-sm">Real-Time Clinical Decision Support</h4>
+                </div>
+                <span id="cds-status-badge" class="px-2 py-0.5 text-[10px] rounded bg-sky-500/10 text-sky-400 font-semibold border border-sky-500/20">Active Evaluation</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 mb-5">
+                <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg">
+                  <p class="text-[10px] text-slate-400 uppercase font-semibold">Triage Acuity (ESI)</p>
+                  <p id="live-esi" class="text-xl font-bold text-sky-400 mt-1">Level 3 (Urgent)</p>
+                </div>
+                <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg">
+                  <p class="text-[10px] text-slate-400 uppercase font-semibold">MEWS Physiological Risk</p>
+                  <p id="live-mews" class="text-xl font-bold text-white mt-1">0 <span class="text-xs font-normal text-slate-400">(Low Risk)</span></p>
+                </div>
+              </div>
+
+              <div class="mb-5">
+                <h5 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-rose-400"></i> Identified Red Flags
+                </h5>
+                <div id="live-redflags" class="space-y-1.5">
+                  <div class="text-slate-500 text-xs italic">No physiological alarms detected yet.</div>
+                </div>
+              </div>
+
+              <div class="mb-5">
+                <h5 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Likely Differential Diagnoses</h5>
+                <div id="live-diff" class="space-y-2">
+                  </div>
+              </div>
+
+              <div>
+                <h5 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Recommended Workup & Orders</h5>
+                <ul id="live-orders" class="space-y-1 text-xs text-slate-300 list-disc list-inside">
+                  <li class="text-slate-500 italic">Awaiting clinical input...</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 3. Patient Directory View
+    function renderPatientsView() {
+      const patients = getPatients();
+      return `
+        <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+          <div class="p-6 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="font-bold text-white text-base">Patient Medical Directory</h3>
+              <p class="text-xs text-slate-400">All registered admissions, triage records, and clinical summaries</p>
+            </div>
+            <div class="w-full sm:w-64">
+              <input type="text" id="patient-search-input" oninput="filterPatientsList()" placeholder="Search MRN, Name, or Condition..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
+                <tr>
+                  <th class="py-3.5 px-4 font-semibold">MRN / ID</th>
+                  <th class="py-3.5 px-4 font-semibold">Patient</th>
+                  <th class="py-3.5 px-4 font-semibold">Acuity</th>
+                  <th class="py-3.5 px-4 font-semibold">Chief Complaint</th>
+                  <th class="py-3.5 px-4 font-semibold">Primary Differential</th>
+                  <th class="py-3.5 px-4 font-semibold">Admitted At</th>
+                  <th class="py-3.5 px-4 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="patients-table-body" class="divide-y divide-slate-800 text-slate-300">
+                ${renderPatientRows(patients)}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPatientRows(patients) {
+      if (patients.length === 0) {
+        return `<tr><td colspan="7" class="text-center py-8 text-slate-500">No records found.</td></tr>`;
+      }
+
+      return patients.map(p => `
+        <tr class="hover:bg-slate-850 transition">
+          <td class="py-3 px-4 font-mono font-medium text-slate-400">${p.id}</td>
+          <td class="py-3 px-4">
+            <div class="font-medium text-white">${p.name}</div>
+            <div class="text-[11px] text-slate-500">${p.age} yrs • ${p.gender}</div>
+          </td>
+          <td class="py-3 px-4">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
+              p.analysis.esiLevel === 1 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+              p.analysis.esiLevel === 2 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+              'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+            }">ESI ${p.analysis.esiLevel}</span>
+          </td>
+          <td class="py-3 px-4 max-w-xs truncate">${p.chiefComplaint}</td>
+          <td class="py-3 px-4 text-sky-300 font-medium">${p.analysis.differential[0]?.condition || 'Under Evaluation'}</td>
+          <td class="py-3 px-4 text-slate-500">${new Date(p.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+          <td class="py-3 px-4 text-right space-x-2">
+            <button onclick="openModal('${p.id}')" class="px-2.5 py-1 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded transition">View Chart</button>
+            <button onclick="deletePatientRecord('${p.id}')" class="px-2 py-1 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // ==================== CDS / AI CLINICAL INFERENCE ENGINE ====================
+
+    function calculateMEWS(vitals) {
+      let score = 0;
+      // SBP
+      if (vitals.sbp <= 70) score += 3;
+      else if (vitals.sbp <= 80) score += 2;
+      else if (vitals.sbp <= 100) score += 1;
+      else if (vitals.sbp >= 200) score += 2;
+
+      // HR
+      if (vitals.hr < 40) score += 2;
+      else if (vitals.hr <= 50) score += 1;
+      else if (vitals.hr >= 101 && vitals.hr <= 110) score += 1;
+      else if (vitals.hr >= 111 && vitals.hr <= 129) score += 2;
+      else if (vitals.hr >= 130) score += 3;
+
+      // RR
+      if (vitals.rr < 9) score += 2;
+      else if (vitals.rr >= 15 && vitals.rr <= 20) score += 0;
+      else if (vitals.rr >= 21 && vitals.rr <= 29) score += 2;
+      else if (vitals.rr >= 30) score += 3;
+
+      // Temp
+      if (vitals.temp < 35.0) score += 2;
+      else if (vitals.temp >= 38.5) score += 2;
+
+      return score;
+    }
+
+    function runClinicalCDSInference(data) {
+      const text = `${data.complaint || ''} ${data.hpi || ''} ${data.ros || ''}`.toLowerCase();
+      const vitals = data.vitals;
+      const mews = calculateMEWS(vitals);
+
+      const redFlags = [];
+      const differential = [];
+      let esiLevel = 3;
+      let orders = [];
+
+      // 1. Critical Vital Triggers
+      if (vitals.spo2 < 90) redFlags.push(`Severe Hypoxemia (SpO2 ${vitals.spo2}%)`);
+      else if (vitals.spo2 < 94) redFlags.push(`Moderate Hypoxemia (SpO2 ${vitals.spo2}%)`);
+
+      if (vitals.sbp < 90) redFlags.push(`Hemodynamic Instability / Hypotension (${vitals.sbp}/${vitals.dbp} mmHg)`);
+      if (vitals.hr > 120) redFlags.push(`Marked Tachycardia (${vitals.hr} bpm)`);
+      if (vitals.rr >= 28) redFlags.push(`Severe Tachypnea (${vitals.rr}/min)`);
+      if (vitals.temp >= 39.0) redFlags.push(`High Pyrexia (${vitals.temp}°C)`);
+
+      // 2. Clinical Domain Pattern Matching (Cardiovascular, Neurologic, Sepsis, Abdominal)
+      const hasCardiacChestPain = text.includes('chest pain') || text.includes('pressure') || text.includes('substernal') || text.includes('radiating to jaw') || text.includes('arm radiation');
+      const hasStroke = text.includes('weakness') || text.includes('facial droop') || text.includes('slurred speech') || text.includes('numbness') || text.includes('thunderclap');
+      const hasRespiratory = text.includes('wheezing') || text.includes('stridor') || text.includes('shortness of breath') || text.includes('dyspnea');
+      const hasSepsis = (vitals.temp > 38.0 || vitals.temp < 36.0) && (vitals.hr > 90) && (vitals.rr > 20);
+      const hasAppendicitis = text.includes('right lower quadrant') || text.includes('rlq') || text.includes('mcburney');
+
+      if (hasCardiacChestPain) {
+        redFlags.push("Acute Coronary Syndrome Risk Criteria Met");
+        differential.push({ condition: "ST-Elevation Myocardial Infarction / NSTEMI", probability: vitals.sbp < 100 ? 86 : 74 });
+        differential.push({ condition: "Acute Pericarditis / Myocarditis", probability: 14 });
+        differential.push({ condition: "Aortic Dissection", probability: 10 });
+        orders.push("STAT 12-Lead Electrocardiogram (ECG)", "Serial High-Sensitivity Troponin", "Bedside Echocardiogram", "Chest Radiograph (AP)");
+        esiLevel = vitals.sbp < 90 || vitals.spo2 < 92 ? 1 : 2;
+      } else if (hasStroke) {
+        redFlags.push("Acute Neurological Deficit - Stroke Code Window");
+        differential.push({ condition: "Acute Ischemic Cerebrovascular Accident (CVA)", probability: 80 });
+        differential.push({ condition: "Intracranial Hemorrhage", probability: 15 });
+        differential.push({ condition: "Transient Ischemic Attack (TIA)", probability: 5 });
+        orders.push("Non-Contrast Head CT STAT", "NIHSS Neurological Assessment", "Fingerstick Blood Glucose", "CTA Head and Neck");
+        esiLevel = 1;
+      } else if (hasRespiratory && (text.includes('peanut') || text.includes('bee') || text.includes('allergy') || text.includes('stridor'))) {
+        redFlags.push("Laryngeal Edema / Impending Airway Compromise");
+        differential.push({ condition: "Severe Anaphylaxis with Airway Obstruction", probability: 92 });
+        differential.push({ condition: "Acute Bronchospasm", probability: 8 });
+        orders.push("0.3mg Epinephrine IM STAT", "Supplemental O2 via Non-Rebreather", "IV Methylprednisolone 125mg", "Continuous SpO2 Waveform");
+        esiLevel = 1;
+      } else if (hasSepsis) {
+        redFlags.push("Systemic Inflammatory Response Criteria (SIRS/Sepsis)");
+        differential.push({ condition: "Severe Sepsis / Septic Shock Risk", probability: 78 });
+        differential.push({ condition: "Pneumonia / Pyelonephritis", probability: 22 });
+        orders.push("Serum Lactate", "Blood Cultures x2 before antibiotics", "Broad-Spectrum IV Antibiotics", "30mL/kg IV Crystalloid Bolus");
+        esiLevel = 2;
+      } else if (hasAppendicitis) {
+        redFlags.push("Localized Peritoneal Irritation in RLQ");
+        differential.push({ condition: "Acute Appendicitis", probability: 84 });
+        differential.push({ condition: "Mesenteric Lymphadenitis", probability: 10 });
+        differential.push({ condition: "Pelvic Inflammatory Disease / Ovarian Torsion", probability: 6 });
+        orders.push("CT Abdomen & Pelvis with IV Contrast", "CBC with Manual Differential", "Serum Lipase & Electrolytes", "NPO Order");
+        esiLevel = 3;
+      } else {
+        differential.push({ condition: "Nonspecific Clinical Presentation", probability: 50 });
+        differential.push({ condition: "Viral Syndrome / Dehydration", probability: 30 });
+        orders.push("Basic Metabolic Panel", "Complete Blood Count", "Clinical Observation");
+        esiLevel = mews >= 3 ? 2 : 4;
+      }
+
+      // Re-adjust ESI based on raw MEWS
+      if (mews >= 5 && esiLevel > 1) {
+        esiLevel = 1;
+        redFlags.push(`Critical MEWS (${mews}) - Immediate Physician Bedside Evaluation`);
+      }
+
+      // Synthesize clinical SOAP narrative
+      const urgencyLabel = esiLevel === 1 ? "Immediate / Resuscitation" : esiLevel === 2 ? "Emergent (<15 min)" : "Urgent (<60 min)";
+      const soap = `S (Subjective): ${data.age}yo ${data.gender} presents complaining of "${data.complaint || 'unspecified'}". History reveals: ${data.hpi || 'None documented'}. PMHx: ${data.pmhx || 'None'}. Allergies: ${data.allergies || 'NKDA'}.\nO (Objective): Vitals: BP ${vitals.sbp}/${vitals.dbp}, HR ${vitals.hr}, RR ${vitals.rr}, SpO2 ${vitals.spo2}%, Temp ${vitals.temp}°C. Calculated MEWS: ${mews}.\nA (Assessment): Triage ESI Level ${esiLevel} (${urgencyLabel}). Primary clinical suspicion: ${differential[0]?.condition || 'Uncertain'}.\nP (Plan): Initiate triage protocol. Execute orders: ${orders.join('; ')}. Re-evaluate vitals q15min.`;
+
+      return {
+        esiLevel,
+        mewsScore: mews,
+        urgency: urgencyLabel,
+        differential,
+        redFlags: [...new Set(redFlags)],
+        recommendedOrders: orders,
+        soapNote: soap
+      };
+    }
+
+    // Attach real-time evaluation to form inputs
+    function attachFormListeners() {
+      const inputs = ['pt-complaint', 'pt-hpi', 'vital-hr', 'vital-sbp', 'vital-dbp', 'vital-rr', 'vital-spo2', 'vital-temp', 'pt-age', 'pt-gender'];
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', updateRealtimePreview);
+        }
+      });
+      updateRealtimePreview();
+    }
+
+    function readFormValues() {
+      return {
+        name: document.getElementById('pt-name')?.value || '',
+        age: parseInt(document.getElementById('pt-age')?.value) || 0,
+        gender: document.getElementById('pt-gender')?.value || 'Male',
+        complaint: document.getElementById('pt-complaint')?.value || '',
+        hpi: document.getElementById('pt-hpi')?.value || '',
+        pmhx: document.getElementById('pt-pmhx')?.value || '',
+        allergies: document.getElementById('pt-allergies')?.value || '',
+        meds: document.getElementById('pt-meds')?.value || '',
+        ros: document.getElementById('pt-ros')?.value || '',
+        vitals: {
+          hr: parseInt(document.getElementById('vital-hr')?.value) || 75,
+          sbp: parseInt(document.getElementById('vital-sbp')?.value) || 120,
+          dbp: parseInt(document.getElementById('vital-dbp')?.value) || 80,
+          rr: parseInt(document.getElementById('vital-rr')?.value) || 16,
+          spo2: parseInt(document.getElementById('vital-spo2')?.value) || 98,
+          temp: parseFloat(document.getElementById('vital-temp')?.value) || 37.0
+        }
+      };
+    }
+
+    function updateRealtimePreview() {
+      const formData = readFormValues();
+      const analysis = runClinicalCDSInference(formData);
+
+      // Render ESI
+      const esiEl = document.getElementById('live-esi');
+      if (esiEl) {
+        esiEl.innerText = `Level ${analysis.esiLevel} (${analysis.urgency})`;
+        esiEl.className = `text-xl font-bold mt-1 ${
+          analysis.esiLevel === 1 ? 'text-rose-400 animate-pulse' :
+          analysis.esiLevel === 2 ? 'text-amber-400' : 'text-sky-400'
+        }`;
+      }
+
+      // Render MEWS
+      const mewsEl = document.getElementById('live-mews');
+      if (mewsEl) {
+        let riskLabel = analysis.mewsScore >= 4 ? "(Critical)" : analysis.mewsScore >= 2 ? "(Moderate Risk)" : "(Low Risk)";
+        mewsEl.innerHTML = `${analysis.mewsScore} <span class="text-xs font-normal text-slate-400">${riskLabel}</span>`;
+        mewsEl.className = `text-xl font-bold mt-1 ${
+          analysis.mewsScore >= 4 ? 'text-rose-400' : analysis.mewsScore >= 2 ? 'text-amber-400' : 'text-emerald-400'
+        }`;
+      }
+
+      // Red Flags
+      const rfEl = document.getElementById('live-redflags');
+      if (rfEl) {
+        if (analysis.redFlags.length === 0) {
+          rfEl.innerHTML = `<div class="text-slate-500 text-xs italic">No physiological alarms detected yet.</div>`;
+        } else {
+          rfEl.innerHTML = analysis.redFlags.map(rf => `
+            <div class="flex items-center gap-2 p-2 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded text-xs">
+              <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0 text-rose-400"></i>
+              <span>${rf}</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      // Differential
+      const diffEl = document.getElementById('live-diff');
+      if (diffEl) {
+        diffEl.innerHTML = analysis.differential.map(d => `
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-200 font-medium">${d.condition}</span>
+              <span class="text-slate-400 font-mono">${d.probability}%</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+              <div class="bg-sky-500 h-1.5 rounded-full" style="width: ${d.probability}%"></div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Orders
+      const ordersEl = document.getElementById('live-orders');
+      if (ordersEl) {
+        ordersEl.innerHTML = analysis.recommendedOrders.map(o => `<li>${o}</li>`).join('');
+      }
+
+      lucide.createIcons();
+    }
+
+    function triggerManualInference() {
+      updateRealtimePreview();
+    }
+
+    // Voice Dictation Simulation
+    function simulateVoiceDictation() {
+      const hpi = document.getElementById('pt-hpi');
+      if (!hpi) return;
+      hpi.value = "Patient states sudden onset of severe epigastric pain radiating straight through to the back after a fatty meal. Accompanied by intractable vomiting x3 and subjective diaphoresis.";
+      document.getElementById('pt-complaint').value = "Severe epigastric pain radiating to back with vomiting";
+      document.getElementById('vital-hr').value = "118";
+      document.getElementById('vital-rr').value = "22";
+      updateRealtimePreview();
+    }
+
+    function fillSampleTrauma() {
+      document.getElementById('pt-name').value = "Robert Chen";
+      document.getElementById('pt-age').value = "71";
+      document.getElementById('pt-gender').value = "Male";
+      document.getElementById('pt-complaint').value = "Confusion, fever, productive cough with rust-colored sputum";
+      document.getElementById('pt-hpi').value = "3 days of progressively worsening chills, high fever, and lethargy. Today family noticed acute altered mental status and combativeness.";
+      document.getElementById('pt-pmhx').value = "COPD, Chronic Kidney Disease Stage 3";
+      document.getElementById('pt-allergies').value = "Ciprofloxacin";
+      document.getElementById('pt-meds').value = "Tiotropium, Lisinopril";
+      document.getElementById('vital-hr').value = "124";
+      document.getElementById('vital-sbp').value = "84";
+      document.getElementById('vital-dbp').value = "48";
+      document.getElementById('vital-rr').value = "28";
+      document.getElementById('vital-spo2').value = "89";
+      document.getElementById('vital-temp').value = "39.4";
+      updateRealtimePreview();
+    }
+
+    // Submit handler
+    function handleIntakeSubmit(e) {
+      e.preventDefault();
+      const data = readFormValues();
+      const analysis = runClinicalCDSInference(data);
+
+      const newRecord = {
+        id: `PT-${Math.floor(1000 + Math.random() * 9000)}`,
+        name: data.name,
+        age: data.age,
+        gender: data.gender,
+        chiefComplaint: data.complaint,
+        hpi: data.hpi,
+        allergies: data.allergies || "NKDA",
+        medications: data.meds || "None",
+        pmhx: data.pmhx || "None",
+        ros: data.ros || "Non-contributory",
+        vitals: data.vitals,
+        timestamp: new Date().toISOString(),
+        analysis: analysis
+      };
+
+      const patients = getPatients();
+      patients.unshift(newRecord);
+      savePatients(patients);
+
+      // Open new patient's chart immediately
+      router('dashboard');
+      openModal(newRecord.id);
+    }
+
+    function deletePatientRecord(id) {
+      if (confirm(`Are you sure you want to discharge/delete record ${id}?`)) {
+        let patients = getPatients();
+        patients = patients.filter(p => p.id !== id);
+        savePatients(patients);
+        router(currentView);
+      }
+    }
+
+    function filterPatientsList() {
+      const query = document.getElementById('patient-search-input').value.toLowerCase();
+      const patients = getPatients();
+      const filtered = patients.filter(p => 
+        p.name.toLowerCase().includes(query) ||
+        p.id.toLowerCase().includes(query) ||
+        p.chiefComplaint.toLowerCase().includes(query) ||
+        p.analysis.differential.some(d => d.condition.toLowerCase().includes(query))
+      );
+      document.getElementById('patients-table-body').innerHTML = renderPatientRows(filtered);
+      lucide.createIcons();
+    }
+
+    // ==================== MODAL (EHR CHART VIEW) ====================
+
+    function openModal(patientId) {
+      const patient = getPatients().find(p => p.id === patientId);
+      if (!patient) return;
+
+      document.getElementById('modal-patient-name').innerText = `${patient.name} (${patient.gender}, ${patient.age}y)`;
+      document.getElementById('modal-patient-meta').innerText = `MRN: ${patient.id} | Admitted: ${new Date(patient.timestamp).toLocaleString()}`;
+
+      const modalBody = document.getElementById('modal-body');
+      modalBody.innerHTML = `
+        <div class="flex flex-wrap items-center justify-between p-4 bg-slate-950 border border-slate-800 rounded-xl gap-4">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded-md text-xs font-bold ${
+              patient.analysis.esiLevel === 1 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+              patient.analysis.esiLevel === 2 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+              'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+            }">
+              ESI ${patient.analysis.esiLevel} • ${patient.analysis.urgency}
+            </span>
+            <span class="text-xs text-slate-400">MEWS Acuity Score: <strong class="text-white">${patient.analysis.mewsScore}</strong></span>
+          </div>
+          <div class="flex items-center gap-4 text-xs font-mono">
+            <span>HR: <strong class="text-white">${patient.vitals.hr}</strong> bpm</span>
+            <span>BP: <strong class="text-white">${patient.vitals.sbp}/${patient.vitals.dbp}</strong></span>
+            <span>SpO2: <strong class="text-white">${patient.vitals.spo2}%</strong></span>
+            <span>RR: <strong class="text-white">${patient.vitals.rr}</strong></span>
+            <span>Temp: <strong class="text-white">${patient.vitals.temp}°C</strong></span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <h5 class="text-slate-400 font-semibold uppercase tracking-wide text-[11px] mb-1">Chief Complaint</h5>
+              <p class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800">${patient.chiefComplaint}</p>
+            </div>
+            <div>
+              <h5 class="text-slate-400 font-semibold uppercase tracking-wide text-[11px] mb-1">History of Present Illness (HPI)</h5>
+              <p class="text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800 whitespace-pre-wrap">${patient.hpi}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
+                <span class="text-slate-500 block">Allergies</span>
+                <span class="text-rose-300 font-medium">${patient.allergies}</span>
+              </div>
+              <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
+                <span class="text-slate-500 block">Medications</span>
+                <span class="text-slate-300">${patient.medications}</span>
+              </div>
+            </div>
+            <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-[11px]">
+              <span class="text-slate-500 block">Past Medical History (PMHx)</span>
+              <span class="text-slate-300">${patient.pmhx}</span>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <h5 class="text-sky-400 font-semibold uppercase tracking-wide text-[11px] mb-1">AI Differential Probability Ranking</h5>
+              <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2.5">
+                ${patient.analysis.differential.map(d => `
+                  <div>
+                    <div class="flex justify-between text-xs mb-1">
+                      <span class="text-slate-200 font-medium">${d.condition}</span>
+                      <span class="text-sky-400 font-mono font-bold">${d.probability}%</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                      <div class="bg-sky-500 h-1.5 rounded-full" style="width: ${d.probability}%"></div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <div>
+              <h5 class="text-rose-400 font-semibold uppercase tracking-wide text-[11px] mb-1">Active Red Flags</h5>
+              <div class="space-y-1">
+                ${patient.analysis.redFlags.map(rf => `
+                  <div class="px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded text-xs flex items-center gap-2">
+                    <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-rose-400"></i>
+                    ${rf}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <div>
+              <h5 class="text-emerald-400 font-semibold uppercase tracking-wide text-[11px] mb-1">Suggested Clinical Orders</h5>
+              <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
+                  ${patient.analysis.recommendedOrders.map(o => `<li>${o}</li>`).join('')}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h5 class="text-slate-400 font-semibold uppercase tracking-wide text-[11px] mb-1 flex items-center justify-between">
+            <span>Automated SBAR / SOAP Note</span>
+            <button onclick="copySoapNote()" class="text-sky-400 hover:underline flex items-center gap-1">
+              <i data-lucide="copy" class="w-3 h-3"></i> Copy Note
+            </button>
+          </h5>
+          <pre id="soap-content" class="bg-slate-950 border border-slate-800 p-4 rounded-xl text-slate-300 text-xs font-mono leading-relaxed whitespace-pre-wrap overflow-x-auto">${patient.analysis.soapNote}</pre>
+        </div>
+      `;
+
+      document.getElementById('patient-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeModal() {
+      document.getElementById('patient-modal').classList.add('hidden');
+    }
+
+    function copySoapNote() {
+      const text = document.getElementById('soap-content').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("SOAP Note successfully copied to clipboard!");
+      });
+    }
+
+    // Initialize application on window load
+    window.addEventListener('DOMContentLoaded', () => {
+      router('dashboard');
+    });
+  </script>
+</body>
+</html>
