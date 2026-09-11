@@ -1,15 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-50/50 text-slate-900">
+<html lang="en" class="h-full bg-slate-50 text-slate-900">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AetherCase | Clinical EHR & Triage</title>
   <link rel="icon" href="https://team-null-pointers.github.io/aethercase/resources/brand/aethercase/aethercase-icon.png" type="image/x-icon">
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -18,67 +13,59 @@
       darkMode: 'class',
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
-          },
           colors: {
             brand: {
-              50: '#f0f9ff',
-              100: '#e0f2fe',
-              500: '#0ea5e9',
-              600: '#0284c7',
-              700: '#0369a1',
+              50: '#eef8ff',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
             }
-          },
-          boxShadow: {
-            'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
-            'floating': '0 10px 40px -10px rgba(0, 0, 0, 0.08)',
           }
         }
       }
     }
   </script>
   <style>
+    /* Custom EHR scrollbars */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    ::-webkit-scrollbar-track { background: #f8fafc; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+    /* Interactive 2D Body Map */
     #body-map-container {
       position: relative;
       width: 220px;
       height: 380px;
       margin: 0 auto;
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><path fill="%23f8fafc" stroke="%23cbd5e1" stroke-width="1.5" d="M50 10 C40 10, 40 25, 50 25 C60 25, 60 10, 50 10 Z M35 30 L65 30 C75 30, 80 40, 80 50 L80 90 C80 100, 75 100, 70 100 L70 50 L65 50 L65 110 C65 120, 55 120, 55 110 L55 90 L45 90 L45 110 C45 120, 35 120, 35 110 L35 50 L30 50 L30 100 C25 100, 20 100, 20 90 L20 50 C20 40, 25 30, 35 30 Z M45 110 L45 190 C45 195, 35 195, 35 190 L35 115 L50 115 Z M55 110 L55 190 C55 195, 65 195, 65 190 L65 115 Z"/></svg>');
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><path fill="%23f1f5f9" stroke="%2394a3b8" stroke-width="2" d="M50 10 C40 10, 40 25, 50 25 C60 25, 60 10, 50 10 Z M35 30 L65 30 C75 30, 80 40, 80 50 L80 90 C80 100, 75 100, 70 100 L70 50 L65 50 L65 110 C65 120, 55 120, 55 110 L55 90 L45 90 L45 110 C45 120, 35 120, 35 110 L35 50 L30 50 L30 100 C25 100, 20 100, 20 90 L20 50 C20 40, 25 30, 35 30 Z M45 110 L45 190 C45 195, 35 195, 35 190 L35 115 L50 115 Z M55 110 L55 190 C55 195, 65 195, 65 190 L65 115 Z"/></svg>');
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
       cursor: crosshair;
       border: 1px dashed #cbd5e1;
-      border-radius: 16px;
+      border-radius: 8px;
       background-color: white;
-      transition: all 0.2s ease;
     }
-    #body-map-container:hover { border-color: #93c5fd; background-color: #f8fafc; }
-    
     .pain-pin {
       position: absolute;
-      width: 14px;
-      height: 14px;
+      width: 12px;
+      height: 12px;
       background: #ef4444;
       border: 2px solid white;
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
-      animation: pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+      animation: pulse 1.5s infinite;
       pointer-events: none;
     }
     @keyframes pulse {
-      0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-      50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
 
+    /* Skeleton Loader for AI NLP Inference */
     .skeleton {
       background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
       background-size: 200% 100%;
@@ -89,6 +76,7 @@
       100% { background-position: -200% 0; }
     }
 
+    /* Barcode generator styling */
     .barcode-line {
       display: inline-block;
       height: 28px;
@@ -96,82 +84,136 @@
       margin-right: 1.5px;
     }
 
-    #cloud-status-toast { transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    input, select, textarea { transition: all 0.2s ease-in-out; }
+    /* Sync Indicator Toast */
+    #cloud-status-toast {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
 
+    /* ==========================================================================
+       PREMIUM EXPORT FORMAT (PRESERVES APP UI FOR PDF)
+       ========================================================================== */
     @media print {
-      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      @page { margin: 10mm; size: A4 portrait; }
-      html, body, main, #content-container { height: auto !important; min-height: auto !important; overflow: visible !important; display: block !important; position: static !important; }
-      aside, header, #export-btn, .no-print, #cloud-status-toast, #auth-guard-overlay { display: none !important; }
-      main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
-      .print-document { padding: 0 !important; margin: 0 !important; border-radius: 0 !important; border: none !important; box-shadow: none !important; }
-      .print-box, .print-document { page-break-inside: avoid !important; break-inside: avoid !important; }
-      #body-map-container { page-break-inside: avoid !important; break-inside: avoid !important; }
+      * { 
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important; 
+      }
+      
+      @page {
+        margin: 10mm;
+        size: A4 portrait;
+      }
+      
+      html, body, main, #content-container {
+        height: auto !important;
+        min-height: auto !important;
+        overflow: visible !important;
+        display: block !important;
+        position: static !important;
+      }
+      
+      aside, header, #export-btn, .no-print, #cloud-status-toast, #auth-guard-overlay { 
+        display: none !important; 
+      }
+      
+      main { 
+        margin: 0 !important; 
+        padding: 0 !important; 
+        width: 100% !important;
+      }
+
+      .print-document {
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+
+      .print-box, .print-document { 
+        page-break-inside: avoid !important; 
+        break-inside: avoid !important; 
+      }
+
+      #body-map-container {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      
       .pain-pin { animation: none !important; } 
-      textarea#case-prescription-pad { resize: none !important; border: none !important; background: transparent !important; }
-      .print-flatten { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
-      .print-flatten > div { margin-bottom: 0 !important; }
+      
+      textarea#case-prescription-pad {
+        resize: none !important;
+      }
+      
+      .print-flatten { 
+        display: grid !important; 
+        grid-template-columns: 1fr 1fr !important; 
+        gap: 16px !important;
+      }
+      .print-flatten > div { 
+        margin-bottom: 0 !important; 
+      }
     }
   </style>
 </head>
-<body class="h-full flex overflow-hidden font-sans antialiased text-sm text-slate-800">
+<body class="h-full flex overflow-hidden font-sans antialiased text-sm">
 
   <!-- Authentication Loading Guard Overlay -->
-  <div id="auth-guard-overlay" class="fixed inset-0 bg-white/80 backdrop-blur-md z-[100] flex flex-col items-center justify-center gap-5">
-    <div class="w-14 h-14 border-4 border-sky-100 border-t-brand-600 rounded-full animate-spin"></div>
+  <div id="auth-guard-overlay" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center gap-4">
+    <div class="w-12 h-12 border-4 border-sky-600 border-t-transparent rounded-full animate-spin"></div>
     <div class="text-center">
-      <h3 class="font-bold text-slate-900 text-lg tracking-tight">AetherCase Gateway</h3>
-      <p class="text-sm text-slate-500 mt-1">Authenticating clinical credentials...</p>
+      <h3 class="font-bold text-slate-800 text-base">AetherCase Clinical Gateway</h3>
+      <p class="text-xs text-slate-400 mt-1">Verifying authenticated clinical credentials...</p>
     </div>
   </div>
 
   <!-- Sidebar Navigation -->
-  <aside class="w-64 bg-white border-r border-slate-200/70 flex flex-col justify-between shrink-0 no-print z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+  <aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 no-print">
     <div>
-      <div class="h-16 flex items-center px-6 border-b border-slate-100 gap-3">
-        <div class="w-9 h-9 bg-gradient-to-br from-brand-500 to-brand-700 rounded-xl flex items-center justify-center text-white shadow-sm">
+      <div class="h-16 flex items-center px-6 border-b border-slate-200 gap-3">
+        <div class="w-8 h-8 bg-sky-600 rounded-lg flex items-center justify-center text-white shadow-md">
           <i data-lucide="activity" class="w-5 h-5"></i>
         </div>
         <div>
-          <h1 class="font-extrabold text-xl tracking-tight text-slate-900">Aether<span class="text-brand-600">Case</span></h1>
+          <h1 class="font-bold text-xl tracking-wide text-slate-900">Aether<span class="text-sky-600">Case</span></h1>
         </div>
       </div>
 
-      <nav class="p-4 space-y-1.5">
-        <button onclick="window.appRouter('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium">
-          <i data-lucide="layout-dashboard" class="w-4.5 h-4.5 text-brand-500"></i>
-          <span>Triage Dashboard</span>
+      <nav class="p-3 space-y-1">
+        <button onclick="window.appRouter('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+          <i data-lucide="layout-dashboard" class="w-4 h-4 text-sky-600"></i>
+          <span class="font-medium">Triage Dashboard</span>
         </button>
-        <button onclick="window.appRouter('intake')" id="nav-intake" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium">
-          <i data-lucide="stethoscope" class="w-4.5 h-4.5 text-emerald-500"></i>
-          <span>New Intake Wizard</span>
+        <button onclick="window.appRouter('intake')" id="nav-intake" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+          <i data-lucide="stethoscope" class="w-4 h-4 text-emerald-600"></i>
+          <span class="font-medium">New Intake Wizard</span>
         </button>
-        <button onclick="window.appRouter('patients')" id="nav-patients" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium">
-          <i data-lucide="users" class="w-4.5 h-4.5 text-indigo-500"></i>
-          <span>Patient Directory</span>
+        <button onclick="window.appRouter('patients')" id="nav-patients" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+          <i data-lucide="users" class="w-4 h-4 text-indigo-600"></i>
+          <span class="font-medium">Patient Directory</span>
         </button>
       </nav>
     </div>
 
     <!-- Authenticated Practitioner Card -->
-    <div class="p-4 m-4 border border-slate-200/70 rounded-2xl bg-slate-50/50 shadow-soft">
-      <div class="flex items-center justify-between gap-3">
-        <div class="flex items-center gap-3 min-w-0">
-          <div id="doctor-avatar" class="w-10 h-10 rounded-full bg-brand-100 border-2 border-white flex items-center justify-center text-sm font-bold text-brand-700 shadow-sm shrink-0 overflow-hidden">
+    <div class="p-4 border-t border-slate-200 bg-slate-50">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div id="doctor-avatar" class="w-9 h-9 rounded-full bg-sky-100 border border-sky-300 flex items-center justify-center text-xs font-bold text-sky-700 shadow-inner shrink-0 overflow-hidden">
             AC
           </div>
           <div class="truncate">
-            <p id="doctor-name" class="text-sm font-bold text-slate-900 truncate">Clinician</p>
-            <p id="doctor-email" class="text-[11px] text-slate-500 truncate">Syncing profile...</p>
+            <p id="doctor-name" class="text-xs font-bold text-slate-900 truncate">Clinician Authenticated</p>
+            <p id="doctor-email" class="text-[10px] text-slate-500 truncate">Syncing profile...</p>
+            <p id="doctor-reg" class="text-[9px] font-mono text-slate-400 truncate">Cloud: Connected</p>
           </div>
         </div>
         <div class="flex flex-col items-end gap-1">
-          <button id="btn-edit-profile" title="Edit Doctor Profile" class="p-1.5 rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-brand-600 transition-all">
-            <i data-lucide="user-cog" class="w-4 h-4"></i>
+          <button id="btn-edit-profile" title="Edit Doctor Profile" class="p-1 rounded hover:bg-slate-200 text-slate-500 hover:text-sky-600 transition">
+            <i data-lucide="user-cog" class="w-3.5 h-3.5"></i>
           </button>
-          <button id="btn-sign-out" title="Sign Out Securely" class="p-1.5 rounded-lg hover:bg-rose-50 hover:shadow-sm text-slate-400 hover:text-rose-600 transition-all">
-            <i data-lucide="log-out" class="w-4 h-4"></i>
+          <button id="btn-sign-out" title="Sign Out Securely" class="p-1 rounded hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
           </button>
         </div>
       </div>
@@ -179,10 +221,13 @@
   </aside>
 
   <!-- Main Work Area -->
-  <main class="flex-1 flex flex-col overflow-hidden bg-slate-50/30">
-    <header class="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/70 px-8 flex items-center justify-between shrink-0 no-print sticky top-0 z-10">
+  <main class="flex-1 flex flex-col overflow-hidden bg-white">
+    <header class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0 no-print">
       <div class="flex items-center gap-4">
-        <h2 id="view-title" class="text-lg font-bold text-slate-800 tracking-tight">Clinical Triage</h2>
+        <h2 id="view-title" class="text-lg font-semibold text-slate-900">Clinical Triage & Operational Monitoring</h2>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- Live Badges & Reset Functionality Removed -->
       </div>
     </header>
 
@@ -190,79 +235,77 @@
   </main>
 
   <!-- Patient Chart Modal -->
-  <div id="patient-modal" class="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-opacity">
-    <div class="bg-white border border-slate-200/60 w-full max-w-4xl max-h-[90vh] rounded-3xl flex flex-col overflow-hidden shadow-floating">
-      <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white">
+  <div id="patient-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 w-full max-w-4xl max-h-[90vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+      <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
         <div>
-          <h3 id="modal-patient-name" class="font-bold text-slate-900 text-lg tracking-tight">Electronic Health Record</h3>
-          <p id="modal-patient-meta" class="text-xs text-slate-500 mt-0.5">MRN: --- | Age: --</p>
+          <h3 id="modal-patient-name" class="font-bold text-slate-900 text-base">Electronic Health Record</h3>
+          <p id="modal-patient-meta" class="text-xs text-slate-500">MRN: --- | Age: --</p>
         </div>
-        <div class="flex items-center gap-3">
-          <button id="modal-view-full-btn" class="px-4 py-2 text-xs bg-white hover:bg-slate-50 text-brand-600 font-semibold rounded-xl border border-slate-200 transition-all flex items-center gap-2 hover:shadow-sm active:scale-95">
-            <i data-lucide="external-link" class="w-4 h-4"></i> Full Case
+        <div class="flex items-center gap-2">
+          <button id="modal-view-full-btn" class="px-3 py-1 text-xs bg-white hover:bg-slate-50 text-sky-600 rounded-lg border border-slate-300 transition flex items-center gap-1.5 shadow-sm">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Full Case View
           </button>
-          <button onclick="window.closeModal()" class="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-all active:scale-95">
+          <button onclick="window.closeModal()" class="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-900">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
       </div>
-      <div id="modal-body" class="p-6 overflow-y-auto space-y-6 text-sm leading-relaxed text-slate-700 bg-slate-50/30"></div>
+      <div id="modal-body" class="p-6 overflow-y-auto space-y-6 text-xs leading-relaxed text-slate-700"></div>
     </div>
   </div>
 
   <!-- Edit Patient Details Modal -->
-  <div id="edit-patient-modal" class="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
-    <div class="bg-white border border-slate-200/60 w-full max-w-lg rounded-3xl flex flex-col overflow-hidden shadow-floating">
-      <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
-        <h3 class="font-bold text-slate-900 text-lg tracking-tight flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center"><i data-lucide="edit" class="w-4 h-4 text-brand-600"></i></div> 
-          Update Details
+  <div id="edit-patient-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+      <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+          <i data-lucide="edit" class="w-4 h-4 text-sky-600"></i> Update Patient Details
         </h3>
-        <button onclick="window.closeEditModal()" class="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 transition-all active:scale-95">
+        <button onclick="window.closeEditModal()" class="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 transition">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
       
-      <form id="edit-patient-form" onsubmit="window.handleEditSubmit(event)" class="p-6 space-y-5 bg-slate-50/30">
+      <form id="edit-patient-form" onsubmit="window.handleEditSubmit(event)" class="p-6 space-y-4">
         <input type="hidden" id="edit-pt-id">
         
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1.5">Patient Name</label>
-          <input type="text" id="edit-pt-name" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 transition-all shadow-sm">
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Patient Name</label>
+          <input type="text" id="edit-pt-name" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
         </div>
         
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1.5">Chief Complaint / Status</label>
-          <input type="text" id="edit-pt-complaint" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 transition-all shadow-sm">
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Chief Complaint / Status</label>
+          <input type="text" id="edit-pt-complaint" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
         </div>
 
-        <div class="grid grid-cols-2 gap-5">
+        <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Assigned Bed</label>
-            <input type="text" id="edit-pt-bed" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 transition-all shadow-sm">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Assigned Bed</label>
+            <input type="text" id="edit-pt-bed" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Heart Rate (bpm)</label>
-            <input type="number" id="edit-pt-hr" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 transition-all shadow-sm">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Heart Rate (bpm)</label>
+            <input type="number" id="edit-pt-hr" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
           </div>
         </div>
 
-        <div class="pt-5 flex justify-end gap-3 border-t border-slate-100">
-          <button type="button" onclick="window.closeEditModal()" class="px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold transition-all active:scale-95 shadow-sm">Cancel</button>
-          <button type="submit" id="btn-save-edit" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-all active:scale-95 shadow-soft">Save Changes</button>
+        <div class="pt-4 flex justify-end gap-3 border-t border-slate-100">
+          <button type="button" onclick="window.closeEditModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition">Cancel</button>
+          <button type="submit" id="btn-save-edit" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-medium transition shadow-sm">Save Changes</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- Real-Time Sync Status Toast -->
-  <div id="cloud-status-toast" class="fixed bottom-6 right-6 z-40 bg-slate-900/95 backdrop-blur border border-slate-700 text-white px-5 py-3 rounded-2xl shadow-floating flex items-center gap-3 text-sm font-medium opacity-0 pointer-events-none transform translate-y-4">
-    <div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-      <i data-lucide="cloud-check" class="w-4 h-4 text-emerald-400"></i>
-    </div>
+  <div id="cloud-status-toast" class="fixed bottom-5 right-5 z-40 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-xs opacity-0 pointer-events-none transform translate-y-2">
+    <i data-lucide="cloud-check" class="w-4 h-4 text-emerald-400"></i>
     <span id="cloud-status-text">Synchronized with Cloud Firestore</span>
   </div>
 
+  <!-- APPLICATION JAVASCRIPT & FIREBASE INTEGRATION -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { 
@@ -278,10 +321,14 @@
       deleteDoc, 
       updateDoc, 
       collection, 
-      onSnapshot,
+      onSnapshot, 
+      query, 
+      orderBy,
+      writeBatch,
       serverTimestamp 
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // 1. Firebase Project Initialization
     const firebaseConfig = {
       apiKey: "AIzaSyCoy14GHFrdob7FqiEqyWhzUDedDLN02-g",
       authDomain: "aethercase-8a28b.firebaseapp.com",
@@ -297,6 +344,7 @@
     const APP_ID = 'aethercase-v1';
     const LOGIN_PAGE_URL = "https://team-null-pointers.github.io/aethercase/account/login";
 
+    // Application state
     let currentUser = null;
     let userProfile = null;
     let livePatients = [];
@@ -309,23 +357,29 @@
       const text = document.getElementById('cloud-status-text');
       if (!toast) return;
       text.textContent = msg;
-      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
       setTimeout(() => {
-        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
       }, 2500);
     }
 
+    // 2. Authentication State Management & Routing Guard
     onAuthStateChanged(auth, async (user) => {
       const overlay = document.getElementById('auth-guard-overlay');
       if (!user) {
+        // Redirect to Login Page if not signed in
         const returnUrl = encodeURIComponent(window.location.href);
         window.location.href = `${LOGIN_PAGE_URL}?redirectUrl=${returnUrl}`;
         return;
       }
+
       currentUser = user;
+
       try {
+        // Load User Profile from Firestore
         const userDocRef = doc(db, 'artifacts', APP_ID, 'users', user.uid);
         const userSnap = await getDoc(userDocRef);
+
         if (userSnap.exists()) {
           userProfile = userSnap.data();
           if (!userProfile.onboardingComplete) {
@@ -333,10 +387,18 @@
             return;
           }
         } else {
-          userProfile = { name: user.displayName || 'Dr. Vikram Sharma', email: user.email, gender: 'N/A', country: 'IN' };
+          userProfile = {
+            name: user.displayName || 'Dr. Vikram Sharma',
+            email: user.email,
+            gender: 'N/A',
+            country: 'IN'
+          };
         }
+
         updatePractitionerCard(user, userProfile);
         setupLiveFirestoreSync(user.uid);
+
+        // Dismiss loading guard
         if (overlay) {
           overlay.style.transition = 'opacity 0.3s ease';
           overlay.style.opacity = '0';
@@ -349,14 +411,25 @@
     });
 
     function updatePractitionerCard(user, profile) {
-      document.getElementById('doctor-name').textContent = profile?.name || user.displayName || 'Authorized Clinician';
-      document.getElementById('doctor-email').textContent = user.email || 'practitioner@aethercase.com';
+      const nameEl = document.getElementById('doctor-name');
+      const emailEl = document.getElementById('doctor-email');
       const avatarEl = document.getElementById('doctor-avatar');
+      const regEl = document.getElementById('doctor-reg');
+
+      const displayName = profile?.name || user.displayName || 'Authorized Clinician';
+      nameEl.textContent = displayName;
+      emailEl.textContent = user.email || 'practitioner@aethercase.com';
+      regEl.textContent = `UID: ${user.uid.substring(0, 8)}...`;
+
       if (user.photoURL) {
-        avatarEl.innerHTML = `<img src="${user.photoURL}" class="w-full h-full object-cover">`;
+        avatarEl.innerHTML = `<img src="${user.photoURL}" class="w-full h-full object-cover" alt="${displayName}">`;
+      } else {
+        const initials = displayName.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+        avatarEl.textContent = initials || 'DR';
       }
     }
 
+    // Sidebar Action Handlers
     document.getElementById('btn-sign-out').addEventListener('click', async () => {
       if (confirm("Sign out of AetherCase secure clinical portal?")) {
         if (unsubscribePatientsSnapshot) unsubscribePatientsSnapshot();
@@ -369,28 +442,42 @@
       window.location.href = `${LOGIN_PAGE_URL}?flow=editprofile&redirectUrl=${encodeURIComponent(window.location.href)}`;
     });
 
+    // 3. Real-Time Firestore Synchronization
     function setupLiveFirestoreSync(uid) {
       const patientsCol = collection(db, 'artifacts', APP_ID, 'users', uid, 'patients');
+      
       unsubscribePatientsSnapshot = onSnapshot(patientsCol, async (snapshot) => {
         const items = [];
         snapshot.forEach((docSnap) => {
           items.push({ id: docSnap.id, ...docSnap.data() });
         });
+
+        // Sort descending by timestamp
         items.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
         livePatients = items;
+
+        // Render current active view with live cloud data
         renderCurrentView();
         showCloudSyncToast("Cloud records synchronized");
+      }, (error) => {
+        console.error("Firestore live synchronization error:", error);
       });
     }
 
+    // ============================================================================
+    // EDIT MODAL LOGIC (CRUD - Update)
+    // ============================================================================
     window.openEditModal = function(id) {
       const pt = livePatients.find(p => p.id === id);
       if (!pt) return;
+
+      // Populate existing data
       document.getElementById('edit-pt-id').value = pt.id;
       document.getElementById('edit-pt-name').value = pt.name || '';
       document.getElementById('edit-pt-complaint').value = pt.chiefComplaint || '';
       document.getElementById('edit-pt-bed').value = pt.bedAssigned || '';
       document.getElementById('edit-pt-hr').value = pt.vitals?.hr || '';
+
       document.getElementById('edit-patient-modal').classList.remove('hidden');
       lucide.createIcons();
     };
@@ -402,11 +489,14 @@
     window.handleEditSubmit = async function(e) {
       e.preventDefault();
       if (!currentUser) return;
+
       const btn = document.getElementById('btn-save-edit');
       btn.disabled = true;
       btn.textContent = "Saving...";
+
       const id = document.getElementById('edit-pt-id').value;
       const patientRef = doc(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'patients', id);
+
       try {
         await updateDoc(patientRef, {
           name: document.getElementById('edit-pt-name').value,
@@ -415,9 +505,11 @@
           "vitals.hr": parseInt(document.getElementById('edit-pt-hr').value) || 0,
           updatedAt: serverTimestamp()
         });
+
         showCloudSyncToast("Patient details successfully updated");
         window.closeEditModal();
       } catch (error) {
+        console.error("Update failed:", error);
         alert("Failed to update patient: " + error.message);
       } finally {
         btn.disabled = false;
@@ -425,6 +517,10 @@
       }
     };
 
+
+    // ============================================================================
+    // APPLICATION ROUTER
+    // ============================================================================
     window.appRouter = function(view, params = {}) {
       currentView = view;
       currentRouteParams = params;
@@ -434,12 +530,13 @@
     function renderCurrentView() {
       const container = document.getElementById('content-container');
       const title = document.getElementById('view-title');
+
       document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('bg-brand-50', 'text-brand-700');
+        btn.classList.remove('bg-slate-100', 'text-slate-900');
         btn.classList.add('text-slate-600');
       });
       const activeBtn = document.getElementById(`nav-${currentView}`);
-      if (activeBtn) activeBtn.classList.add('bg-brand-50', 'text-brand-700');
+      if (activeBtn) activeBtn.classList.add('bg-slate-100', 'text-slate-900');
 
       if (currentView === 'dashboard') {
         title.innerText = "Clinical Triage & Operational Monitoring";
@@ -457,6 +554,9 @@
       lucide.createIcons();
     }
 
+    // ============================================================================
+    // CLINICAL INFERENCE & CDS HEURISTICS
+    // ============================================================================
     function calculateMEWS(v) {
       let score = 0;
       if (v.sbp <= 70) score += 3;
@@ -577,6 +677,9 @@
       };
     }
 
+    // ============================================================================
+    // VIEW 1: DASHBOARD
+    // ============================================================================
     function renderDashboard(container) {
       const patients = livePatients;
       const criticalCount = patients.filter(p => p.analysis?.esiLevel <= 2).length;
@@ -585,52 +688,57 @@
 
       container.innerHTML = `
         <div class="space-y-6 max-w-7xl mx-auto">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div class="bg-white border border-slate-200/60 p-5 rounded-2xl shadow-soft hover:shadow-floating transition-shadow">
+          <!-- Metric KPI Row -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
               <div class="flex items-center justify-between text-slate-500 mb-2">
-                <span class="text-xs uppercase font-bold tracking-wider">Active Triage Queue</span>
-                <div class="p-2 bg-brand-50 rounded-lg text-brand-600"><i data-lucide="users" class="w-4.5 h-4.5"></i></div>
+                <span class="text-xs uppercase font-semibold">Active Triage Queue</span>
+                <i data-lucide="users" class="w-4 h-4 text-sky-600"></i>
               </div>
-              <div class="text-3xl font-black text-slate-800 tracking-tight">${patients.length} <span class="text-sm font-medium text-slate-400">/ ${totalBeds} Beds</span></div>
-              <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3 overflow-hidden">
-                <div class="bg-brand-500 h-1.5 rounded-full" style="width: ${Math.min(100, (patients.length/totalBeds)*100)}%"></div>
+              <div class="text-2xl font-bold text-slate-900">${patients.length} <span class="text-sm font-normal text-slate-400">/ ${totalBeds} Beds</span></div>
+              <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
+                <div class="bg-sky-500 h-1.5 rounded-full" style="width: ${Math.min(100, (patients.length/totalBeds)*100)}%"></div>
               </div>
+              <p class="text-[11px] text-slate-400 mt-1">Bed occupancy rate: ${((patients.length/totalBeds)*100).toFixed(0)}%</p>
             </div>
             
-            <div class="bg-white border border-slate-200/60 p-5 rounded-2xl shadow-soft hover:shadow-floating transition-shadow border-l-4 border-l-rose-500 relative overflow-hidden">
-              <div class="absolute -right-4 -top-4 w-16 h-16 bg-rose-50 rounded-full opacity-50"></div>
-              <div class="flex items-center justify-between text-slate-500 mb-2 relative z-10">
-                <span class="text-xs uppercase font-bold tracking-wider">Critical Alerts</span>
-                <div class="p-2 bg-rose-50 rounded-lg text-rose-600"><i data-lucide="alert-triangle" class="w-4.5 h-4.5"></i></div>
+            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm border-l-4 border-l-rose-500">
+              <div class="flex items-center justify-between text-slate-500 mb-2">
+                <span class="text-xs uppercase font-semibold">Critical Acuity Alerts</span>
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500"></i>
               </div>
-              <div class="text-3xl font-black text-rose-600 tracking-tight relative z-10">${criticalCount}</div>
+              <div class="text-2xl font-bold text-rose-600">${criticalCount}</div>
+              <p class="text-[11px] text-slate-400 mt-1">Unacknowledged ESI 1 & 2 cases</p>
             </div>
 
-            <div class="bg-white border border-slate-200/60 p-5 rounded-2xl shadow-soft hover:shadow-floating transition-shadow">
+            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
               <div class="flex items-center justify-between text-slate-500 mb-2">
-                <span class="text-xs uppercase font-bold tracking-wider">Door-to-Doctor</span>
-                <div class="p-2 bg-amber-50 rounded-lg text-amber-600"><i data-lucide="clock" class="w-4.5 h-4.5"></i></div>
+                <span class="text-xs uppercase font-semibold">Door-to-Doctor Time</span>
+                <i data-lucide="clock" class="w-4 h-4 text-amber-500"></i>
               </div>
-              <div class="text-3xl font-black text-amber-600 tracking-tight">14 <span class="text-sm font-medium text-amber-600/70">min</span></div>
+              <div class="text-2xl font-bold text-amber-600">14 min</div>
+              <p class="text-[11px] text-slate-400 mt-1">NABH target: &lt; 20 minutes</p>
             </div>
 
-            <div class="bg-white border border-slate-200/60 p-5 rounded-2xl shadow-soft hover:shadow-floating transition-shadow">
+            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
               <div class="flex items-center justify-between text-slate-500 mb-2">
-                <span class="text-xs uppercase font-bold tracking-wider">AI Anomalies</span>
-                <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600"><i data-lucide="brain-circuit" class="w-4.5 h-4.5"></i></div>
+                <span class="text-xs uppercase font-semibold">AI-Flagged Anomalies</span>
+                <i data-lucide="brain-circuit" class="w-4 h-4 text-indigo-600"></i>
               </div>
-              <div class="text-3xl font-black text-indigo-600 tracking-tight">${aiAnomalies}</div>
+              <div class="text-2xl font-bold text-indigo-600">${aiAnomalies}</div>
+              <p class="text-[11px] text-slate-400 mt-1">Shock index / occult sepsis alerts</p>
             </div>
           </div>
 
-          <div class="bg-white border border-slate-200/60 rounded-2xl overflow-hidden shadow-soft">
-            <div class="px-6 py-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <!-- Active Priority Triage Queue -->
+          <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+            <div class="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50">
               <div>
-                <h3 class="font-bold text-slate-900 text-base tracking-tight">Active Priority Queue</h3>
-                <p class="text-xs text-slate-500 mt-0.5">Ranked by ESI Acuity and MEWS score</p>
+                <h3 class="font-bold text-slate-900 text-base">Active Triage Priority Queue</h3>
+                <p class="text-xs text-slate-500">Cloud synchronized records ranked by ESI Acuity and MEWS score</p>
               </div>
-              <button onclick="window.appRouter('intake')" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all active:scale-95 shadow-soft">
-                <i data-lucide="plus" class="w-4 h-4"></i> New Encounter
+              <button onclick="window.appRouter('intake')" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition shadow-sm">
+                <i data-lucide="plus" class="w-4 h-4"></i> New Intake Encounter
               </button>
             </div>
             <div class="divide-y divide-slate-100 overflow-x-auto">
@@ -643,44 +751,47 @@
 
     function renderPriorityQueueRows(patients) {
       const sorted = [...patients].sort((a, b) => (a.analysis?.esiLevel || 3) - (b.analysis?.esiLevel || 3) || (b.analysis?.mewsScore || 0) - (a.analysis?.mewsScore || 0));
-      if (sorted.length === 0) return `<div class="p-8 text-center text-slate-400 font-medium">No active encounters found in Firestore queue.</div>`;
+      if (sorted.length === 0) return `<div class="p-8 text-center text-slate-400">No active encounters found in Firestore queue.</div>`;
 
       return sorted.map(pt => {
-        let badgeStyle = pt.analysis?.esiLevel === 1 ? "bg-rose-50 text-rose-700 border-rose-200 animate-pulse" :
-                         pt.analysis?.esiLevel === 2 ? "bg-amber-50 text-amber-700 border-amber-200" :
-                         "bg-sky-50 text-sky-700 border-sky-200";
+        let badgeColor = "bg-slate-100 text-slate-700";
+        if (pt.analysis?.esiLevel === 1) badgeColor = "bg-rose-100 text-rose-700 border border-rose-200 animate-pulse";
+        else if (pt.analysis?.esiLevel === 2) badgeColor = "bg-amber-100 text-amber-700 border border-amber-200";
+        else if (pt.analysis?.esiLevel === 3) badgeColor = "bg-sky-100 text-sky-700 border border-sky-200";
 
         return `
-          <div class="p-5 hover:bg-slate-50/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 transition-colors">
-            <div class="flex items-center gap-4 min-w-[240px]">
-              <span class="px-3 py-1 rounded-lg text-[11px] font-bold border ${badgeStyle}">
+          <div class="p-4 hover:bg-slate-50 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition bg-white">
+            <div class="flex items-center gap-3 min-w-[240px]">
+              <span class="px-2.5 py-1 rounded text-xs font-bold ${badgeColor}">
                 ESI ${pt.analysis?.esiLevel || 3}
               </span>
               <div>
-                <h4 class="font-bold text-slate-900 cursor-pointer hover:text-brand-600 transition-colors" onclick="window.openModal('${pt.id}')">${pt.name}</h4>
-                <p class="text-[11px] text-slate-500 mt-0.5">${pt.age}y, ${pt.gender} • <span class="font-mono text-slate-400">${pt.uhid || pt.id}</span></p>
+                <h4 class="font-semibold text-slate-900 cursor-pointer hover:text-sky-600 transition" onclick="window.openModal('${pt.id}')">${pt.name}</h4>
+                <p class="text-[11px] text-slate-500">${pt.age}y, ${pt.gender} • <span class="font-mono text-slate-400">${pt.uhid || pt.id}</span></p>
               </div>
             </div>
 
             <div class="flex-1 max-w-md">
-              <p class="text-sm text-slate-700 truncate font-medium"><span class="text-slate-400">CC:</span> ${pt.chiefComplaint}</p>
-              <p class="text-[11px] text-slate-500 truncate mt-1">ICD-10: <span class="text-brand-600 font-semibold">${pt.analysis?.primaryIcd10 || pt.analysis?.differential?.[0]?.condition || 'Evaluation'}</span></p>
+              <p class="text-xs text-slate-700 truncate"><span class="text-slate-400 font-medium">CC:</span> ${pt.chiefComplaint}</p>
+              <p class="text-[11px] text-slate-500 truncate mt-0.5">ICD-10: <span class="text-sky-700 font-medium">${pt.analysis?.primaryIcd10 || pt.analysis?.differential?.[0]?.condition || 'Under Evaluation'}</span></p>
             </div>
 
-            <div class="flex items-center gap-2 text-[11px] font-mono text-slate-600 bg-white border border-slate-200 shadow-sm px-4 py-2 rounded-xl">
-              <span class="${pt.vitals?.hr > 100 || pt.vitals?.hr < 50 ? 'text-amber-600 font-bold' : ''}">HR: <strong class="text-slate-900">${pt.vitals?.hr}</strong></span>
-              <span class="mx-1 text-slate-300">|</span>
-              <span class="${pt.vitals?.sbp < 90 ? 'text-rose-600 font-bold' : ''}">BP: <strong class="text-slate-900">${pt.vitals?.sbp}/${pt.vitals?.dbp}</strong></span>
-              <span class="mx-1 text-slate-300">|</span>
-              <span>MEWS: <strong class="text-brand-600">${pt.analysis?.mewsScore || 0}</strong></span>
+            <div class="flex items-center gap-3 text-[11px] font-mono text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+              <span class="${pt.vitals?.hr > 100 || pt.vitals?.hr < 50 ? 'text-amber-600 font-bold' : ''}">HR: ${pt.vitals?.hr}</span>
+              <span class="${pt.vitals?.sbp < 90 ? 'text-rose-600 font-bold' : ''}">BP: ${pt.vitals?.sbp}/${pt.vitals?.dbp}</span>
+              <span class="${pt.vitals?.spo2 < 94 ? 'text-rose-600 font-bold' : ''}">SpO2: ${pt.vitals?.spo2}%</span>
+              <span>MEWS: <strong class="text-slate-900">${pt.analysis?.mewsScore || 0}</strong></span>
             </div>
 
             <div class="flex items-center gap-2">
-              <button onclick="window.openModal('${pt.id}')" class="px-4 py-2 text-xs bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl transition-all border border-slate-200 hover:shadow-sm active:scale-95">
+              <button onclick="window.openModal('${pt.id}')" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition border border-slate-200">
                 Quick View
               </button>
-              <button onclick="window.appRouter('case-record', {id: '${pt.id}'})" class="px-4 py-2 text-xs bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold rounded-xl transition-all border border-brand-200 hover:shadow-sm active:scale-95">
+              <button onclick="window.appRouter('case-record', {id: '${pt.id}'})" class="px-3 py-1.5 text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-lg transition border border-sky-200 font-medium">
                 Official Chart
+              </button>
+              <button onclick="window.openEditModal('${pt.id}')" class="px-3 py-1.5 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition border border-emerald-200 font-medium">
+                Edit
               </button>
             </div>
           </div>
@@ -688,6 +799,9 @@
       }).join('');
     }
 
+    // ============================================================================
+    // VIEW 2: MULTI-STEP INTAKE WIZARD
+    // ============================================================================
     let currentStep = 1;
     let wizardPainMarkers = [];
     let aiTimeout = null;
@@ -699,250 +813,280 @@
       container.innerHTML = `
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto">
           <div class="lg:col-span-7 space-y-6">
-            <div class="bg-white border border-slate-200/60 rounded-3xl p-8 shadow-soft">
-              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-5 mb-6">
+            <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 pb-4 mb-6">
                 <div>
-                  <h3 class="font-bold text-slate-900 text-lg tracking-tight">Clinical Intake Form</h3>
-                  <p class="text-xs text-slate-500 mt-1">Step ${currentStep} of 4 • Press Enter to advance</p>
+                  <h3 class="font-bold text-slate-900 text-base">Standardized Clinical Intake Form</h3>
+                  <p class="text-xs text-slate-500">Step ${currentStep} of 4 • Press Enter to advance fields</p>
                 </div>
                 <div class="flex items-center gap-2">
-                  <button type="button" onclick="window.fillSampleTrauma()" class="text-xs px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-brand-600 border border-slate-200 rounded-xl transition-all font-medium">Load Sepsis</button>
-                  <button type="button" onclick="window.fillSampleCardiac()" class="text-xs px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-rose-600 border border-slate-200 rounded-xl transition-all font-medium">Load STEMI</button>
+                  <button type="button" onclick="window.fillSampleTrauma()" class="text-xs px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-sky-600 border border-slate-200 rounded-lg transition">
+                    Load Sepsis Preset
+                  </button>
+                  <button type="button" onclick="window.fillSampleCardiac()" class="text-xs px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-rose-600 border border-slate-200 rounded-lg transition">
+                    Load STEMI Preset
+                  </button>
                 </div>
               </div>
 
               <!-- Progress Bar -->
-              <div class="mb-8">
-                <div class="flex items-center justify-between relative mb-3">
-                  <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1.5 bg-slate-100 -z-10 rounded-full"></div>
+              <div class="mb-6">
+                <div class="flex items-center justify-between relative mb-2">
+                  <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 -z-10 rounded-full"></div>
                   ${[1,2,3,4].map(step => `
-                    <div id="step-indicator-${step}" class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-sm transition-all ${step === 1 ? 'bg-brand-600 text-white ring-4 ring-brand-100' : 'bg-white border-2 border-slate-200 text-slate-400'}">
+                    <div id="step-indicator-${step}" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-4 border-white ${step === 1 ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-500'} transition-colors">
                       ${step}
                     </div>
                   `).join('')}
                 </div>
-                <div class="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">
+                <div class="flex justify-between text-[11px] font-semibold text-slate-500 uppercase px-1">
                   <span>Demographics</span>
-                  <span>Complaint</span>
-                  <span>Systemic</span>
-                  <span>Objective</span>
+                  <span>Chief Complaint</span>
+                  <span>Systemic Review</span>
+                  <span>Physical Exam</span>
                 </div>
               </div>
 
               <form id="wizard-form" class="space-y-6">
-                <!-- STEP 1 -->
-                <div id="wizard-step-1" class="wizard-step space-y-5">
-                  <h4 class="text-xs font-bold text-brand-600 uppercase tracking-widest border-b border-slate-100 pb-2">Step 1: Patient Demographics & Baseline Vitals</h4>
+                <!-- STEP 1: Demographics -->
+                <div id="wizard-step-1" class="wizard-step space-y-4">
+                  <h4 class="text-xs font-bold text-sky-600 uppercase tracking-wider">Step 1: Patient Demographics & Baseline Vitals</h4>
                   
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1.5">Full Legal Name *</label>
-                      <input type="text" id="pt-name" required class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm">
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Full Legal Name *</label>
+                      <input type="text" id="pt-name" required placeholder="e.g. Sunita Devi" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500">
                     </div>
                     <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1.5">Age *</label>
-                      <input type="number" id="pt-age" required min="0" max="125" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm">
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Age *</label>
+                      <input type="number" id="pt-age" required min="0" max="125" placeholder="Years" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500">
                     </div>
                     <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1.5">Biological Sex *</label>
-                      <select id="pt-gender" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm">
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Biological Sex *</label>
+                      <select id="pt-gender" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500">
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                         <option value="Other">Other</option>
                       </select>
                     </div>
                     <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1.5">Blood Group</label>
-                      <select id="pt-blood" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm">
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Blood Group</label>
+                      <select id="pt-blood" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500">
                         <option value="">Unknown</option>
                         <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
                         <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
                       </select>
                     </div>
                     <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1.5">Contact Phone</label>
-                      <input type="tel" id="pt-phone" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm">
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Emergency Contact Phone</label>
+                      <input type="tel" id="pt-phone" placeholder="e.g. +91 98765 43210" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500">
                     </div>
                     <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1.5">ABHA Health ID</label>
-                      <input type="text" id="pt-abha" placeholder="91-XXXX-XXXX-XXXX" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-2.5 font-mono text-xs focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm">
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">ABHA Health ID (Digital)</label>
+                      <input type="text" id="pt-abha" placeholder="91-XXXX-XXXX-XXXX" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 font-mono text-xs focus:outline-none focus:border-sky-500">
                     </div>
                   </div>
 
-                  <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 space-y-4 shadow-sm">
+                  <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                     <div class="flex items-center justify-between">
                       <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Physiological Vitals</span>
                       <div id="vitals-alert-badges" class="flex flex-wrap gap-1.5"></div>
                     </div>
 
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <div>
-                        <span class="text-[11px] font-medium text-slate-500 block mb-1">Height (cm)</span>
-                        <input type="number" id="pt-height" value="175" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm" oninput="window.calculateBMIAndVitals()">
+                        <span class="text-[11px] text-slate-500 block mb-1">Height (cm)</span>
+                        <input type="number" id="pt-height" value="175" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:outline-none focus:border-sky-500" oninput="window.calculateBMIAndVitals()">
                       </div>
                       <div>
-                        <span class="text-[11px] font-medium text-slate-500 block mb-1">Weight (kg)</span>
-                        <input type="number" id="pt-weight" step="0.1" value="70" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm" oninput="window.calculateBMIAndVitals()">
+                        <span class="text-[11px] text-slate-500 block mb-1">Weight (kg)</span>
+                        <input type="number" id="pt-weight" step="0.1" value="70" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:outline-none focus:border-sky-500" oninput="window.calculateBMIAndVitals()">
                       </div>
                       <div>
-                        <span class="text-[11px] font-medium text-slate-500 block mb-1">Heart Rate (bpm)</span>
-                        <input type="number" id="vital-hr" value="78" required class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm" oninput="window.calculateBMIAndVitals()">
+                        <span class="text-[11px] text-slate-500 block mb-1">Heart Rate (bpm)</span>
+                        <input type="number" id="vital-hr" value="78" required class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:outline-none focus:border-sky-500" oninput="window.calculateBMIAndVitals()">
                       </div>
                       <div>
-                        <span class="text-[11px] font-medium text-slate-500 block mb-1">Temp (°F)</span>
-                        <input type="number" step="0.1" id="vital-temp" value="98.2" required class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm" oninput="window.calculateBMIAndVitals()">
+                        <span class="text-[11px] text-slate-500 block mb-1">Temp (°F)</span>
+                        <input type="number" step="0.1" id="vital-temp" value="98.2" required class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:outline-none focus:border-sky-500" oninput="window.calculateBMIAndVitals()">
                       </div>
                       <div>
-                        <span class="text-[11px] font-medium text-slate-500 block mb-1">Sys BP (mmHg)</span>
-                        <input type="number" id="vital-sbp" value="120" required class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm" oninput="window.calculateBMIAndVitals()">
+                        <span class="text-[11px] text-slate-500 block mb-1">Sys BP (mmHg)</span>
+                        <input type="number" id="vital-sbp" value="120" required class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:outline-none focus:border-sky-500" oninput="window.calculateBMIAndVitals()">
                       </div>
                       <div>
-                        <span class="text-[11px] font-medium text-slate-500 block mb-1">Dia BP (mmHg)</span>
-                        <input type="number" id="vital-dbp" value="80" required class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm" oninput="window.calculateBMIAndVitals()">
+                        <span class="text-[11px] text-slate-500 block mb-1">Dia BP (mmHg)</span>
+                        <input type="number" id="vital-dbp" value="80" required class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:outline-none focus:border-sky-500" oninput="window.calculateBMIAndVitals()">
                       </div>
                       <div>
-                        <span class="text-[11px] font-medium text-slate-500 block mb-1">Resp Rate (/min)</span>
-                        <input type="number" id="vital-rr" value="16" required class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm" oninput="window.calculateBMIAndVitals()">
+                        <span class="text-[11px] text-slate-500 block mb-1">Resp Rate (/min)</span>
+                        <input type="number" id="vital-rr" value="16" required class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:outline-none focus:border-sky-500" oninput="window.calculateBMIAndVitals()">
                       </div>
                       <div>
-                        <span class="text-[11px] font-medium text-slate-500 block mb-1">SpO2 (%)</span>
-                        <input type="number" id="vital-spo2" value="98" required class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm" oninput="window.calculateBMIAndVitals()">
+                        <span class="text-[11px] text-slate-500 block mb-1">SpO2 (%)</span>
+                        <input type="number" id="vital-spo2" value="98" required class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:outline-none focus:border-sky-500" oninput="window.calculateBMIAndVitals()">
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <!-- STEP 2 -->
-                <div id="wizard-step-2" class="wizard-step space-y-5 hidden">
-                  <h4 class="text-xs font-bold text-brand-600 uppercase tracking-widest border-b border-slate-100 pb-2">Step 2: Presenting Complaint & Timeline</h4>
+                <!-- STEP 2: Chief Complaint -->
+                <div id="wizard-step-2" class="wizard-step space-y-4 hidden">
+                  <h4 class="text-xs font-bold text-sky-600 uppercase tracking-wider">Step 2: Presenting Complaint & Timeline</h4>
                   <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Chief Complaint *</label>
-                    <input type="text" id="pt-complaint" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Chief Complaint (Presenting Problem) *</label>
+                    <input type="text" id="pt-complaint" placeholder="e.g. Sharp substernal chest pressure with radiation to arm" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
                   </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1.5">Onset Details</label>
-                      <input type="text" id="pt-onset" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm">
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Onset Details</label>
+                      <input type="text" id="pt-onset" placeholder="e.g. Sudden onset 2 hours ago while resting" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
                     </div>
                     <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1.5">Duration (Days)</label>
-                      <input type="number" id="pt-duration" min="0" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm">
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Duration (Days)</label>
+                      <input type="number" id="pt-duration" min="0" placeholder="e.g. 1" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
                     </div>
                   </div>
+
                   <div>
-                    <div class="flex justify-between items-center mb-1.5">
-                      <label class="block text-xs font-bold text-slate-700">History of Present Illness (HPI) *</label>
-                      <button type="button" onclick="window.simulateVoiceDictation()" class="text-[11px] text-brand-600 hover:text-brand-700 flex items-center gap-1 font-semibold">
-                        <i data-lucide="mic" class="w-3.5 h-3.5"></i> Dictate
+                    <div class="flex justify-between items-center mb-1">
+                      <label class="block text-xs font-semibold text-slate-700">History of Present Illness (HPI Narrative) *</label>
+                      <button type="button" onclick="window.simulateVoiceDictation()" class="text-[11px] text-sky-600 hover:text-sky-700 flex items-center gap-1 font-medium">
+                        <i data-lucide="mic" class="w-3.5 h-3.5"></i> Dictate Voice
                       </button>
                     </div>
-                    <textarea id="pt-hpi" rows="3" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm"></textarea>
+                    <textarea id="pt-hpi" rows="3" placeholder="Describe quality, radiation, severity (1-10), associated symptoms..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500"></textarea>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Aggravating Factors</label>
+                      <input type="text" id="pt-aggravates" placeholder="e.g. Exertion, lying flat, deep inspiration" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Ameliorating Factors</label>
+                      <input type="text" id="pt-ameliorates" placeholder="e.g. Rest, sublingual nitroglycerin, sitting up" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
+                    </div>
                   </div>
                 </div>
 
-                <!-- STEP 3 -->
-                <div id="wizard-step-3" class="wizard-step space-y-5 hidden">
-                  <h4 class="text-xs font-bold text-brand-600 uppercase tracking-widest border-b border-slate-100 pb-2">Step 3: Medical History & Review of Systems</h4>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- STEP 3: Medical History -->
+                <div id="wizard-step-3" class="wizard-step space-y-4 hidden">
+                  <h4 class="text-xs font-bold text-sky-600 uppercase tracking-wider">Step 3: Medical History & Review of Systems</h4>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1.5">Past Medical History</label>
-                      <textarea id="pt-pmhx" rows="3" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm"></textarea>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Past Medical History (PMHx)</label>
+                      <textarea id="pt-pmhx" rows="3" placeholder="e.g. HTN, T2DM, CAD, prior surgeries..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500"></textarea>
                     </div>
                     <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1.5">Family & Social History</label>
-                      <textarea id="pt-fhx" rows="3" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm"></textarea>
-                    </div>
-                  </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1.5">Current Medications</label>
-                      <input type="text" id="pt-meds" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm">
-                    </div>
-                    <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1.5">Allergies</label>
-                      <input type="text" id="pt-allergies" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm">
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Family & Social History (FHx)</label>
+                      <textarea id="pt-fhx" rows="3" placeholder="e.g. Premature CAD in father, non-smoker..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500"></textarea>
                     </div>
                   </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Current Medications</label>
+                      <input type="text" id="pt-meds" placeholder="e.g. Metoprolol 50mg, Atorvastatin 20mg" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Allergies</label>
+                      <input type="text" id="pt-allergies" placeholder="e.g. NKDA or Penicillin (rash)" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
+                    </div>
+                  </div>
+
                   <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Review of Systems (ROS)</label>
-                    <textarea id="pt-ros" rows="2" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm"></textarea>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Review of Systems (ROS)</label>
+                    <textarea id="pt-ros" rows="2" placeholder="e.g. Negative for fevers, chills. Positive for diaphoresis and nausea..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500"></textarea>
                   </div>
                 </div>
 
-                <!-- STEP 4 -->
-                <div id="wizard-step-4" class="wizard-step space-y-5 hidden">
-                  <h4 class="text-xs font-bold text-brand-600 uppercase tracking-widest border-b border-slate-100 pb-2">Step 4: Objective Physical Exam & Map</h4>
+                <!-- STEP 4: Objective Physical Exam & Body Map -->
+                <div id="wizard-step-4" class="wizard-step space-y-4 hidden">
+                  <h4 class="text-xs font-bold text-sky-600 uppercase tracking-wider">Step 4: Objective Physical Exam & Anatomical Body Map</h4>
+                  
                   <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                    <div class="md:col-span-7 space-y-4">
+                    <div class="md:col-span-7 space-y-3">
                       <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Physical Examination Findings</label>
-                        <textarea id="pt-exam" rows="7" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm"></textarea>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Physical Examination Findings</label>
+                        <textarea id="pt-exam" rows="7" placeholder="General appearance, HEENT, Cardiovascular, Respiratory, Abdominal exam..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500"></textarea>
                       </div>
                       <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Initial Draft Prescription</label>
-                        <textarea id="pt-prescript" rows="3" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all shadow-sm"></textarea>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Initial Draft Prescription Orders</label>
+                        <textarea id="pt-prescript" rows="3" placeholder="Medication, Dosage, Route, Frequency..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500"></textarea>
                       </div>
                     </div>
-                    <div class="md:col-span-5 bg-slate-50/50 p-5 rounded-2xl border border-slate-200 text-center shadow-sm">
-                      <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-bold text-slate-700">2D Pain Locator</span>
-                        <button type="button" onclick="window.clearPainPins()" class="text-[11px] text-rose-600 font-semibold hover:underline">Clear Pins</button>
+                    
+                    <div class="md:col-span-5 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-slate-700">2D Pain Locator</span>
+                        <button type="button" onclick="window.clearPainPins()" class="text-[11px] text-rose-600 hover:underline">Clear Pins</button>
                       </div>
                       <div id="body-map-container" onclick="window.handleBodyMapClick(event)"></div>
+                      <p class="text-[10px] text-slate-500 mt-2">Click on body map to log pain markers</p>
                     </div>
                   </div>
                 </div>
 
-                <div class="pt-6 border-t border-slate-100 flex justify-between items-center">
-                  <button type="button" id="btn-prev" onclick="window.changeWizardStep(-1)" class="invisible px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl transition-all text-sm font-semibold shadow-sm active:scale-95">Back</button>
-                  <button type="button" id="btn-next" onclick="window.changeWizardStep(1)" class="px-7 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-all shadow-soft active:scale-95">Next Step</button>
-                  <button type="submit" id="btn-submit" class="hidden px-7 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-all shadow-soft flex items-center gap-2 active:scale-95"><i data-lucide="check-circle" class="w-4 h-4"></i> Save Intake</button>
+                <!-- Wizard Actions -->
+                <div class="pt-4 border-t border-slate-200 flex justify-between items-center">
+                  <button type="button" id="btn-prev" onclick="window.changeWizardStep(-1)" class="invisible px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition text-xs font-medium">
+                    Back
+                  </button>
+                  <button type="button" id="btn-next" onclick="window.changeWizardStep(1)" class="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-medium transition shadow">
+                    Next Step
+                  </button>
+                  <button type="submit" id="btn-submit" class="hidden px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition shadow flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i> Save
+                  </button>
                 </div>
               </form>
             </div>
           </div>
 
-          <!-- CDS Sidebar -->
+          <!-- Right Column: Live CDS Evaluation -->
           <div class="lg:col-span-5 space-y-6">
-            <div class="bg-white border border-slate-200/60 rounded-3xl p-6 sticky top-24 shadow-soft">
-              <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+            <div class="bg-white border border-slate-200 rounded-xl p-6 sticky top-4 shadow-sm">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
                 <div class="flex items-center gap-2">
-                  <div class="p-1.5 bg-brand-50 rounded-lg text-brand-600"><i data-lucide="sparkles" class="w-4 h-4"></i></div>
-                  <h4 class="font-bold text-slate-900 text-sm tracking-tight">AI Decision Support</h4>
+                  <i data-lucide="sparkles" class="w-4 h-4 text-sky-600"></i>
+                  <h4 class="font-bold text-slate-900 text-sm">Real-Time Decision Support</h4>
                 </div>
-                <span id="ai-status-badge" class="px-2.5 py-1 text-[10px] rounded-lg bg-brand-50 text-brand-700 font-bold border border-brand-200">Live Evaluation</span>
+                <span id="ai-status-badge" class="px-2 py-0.5 text-[10px] rounded bg-sky-100 text-sky-700 font-semibold border border-sky-200">Live Evaluation</span>
               </div>
 
               <div id="ai-sidebar-content">
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                  <div class="p-4 bg-slate-50/50 border border-slate-200 rounded-2xl">
-                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Triage Acuity (ESI)</p>
-                    <p id="live-esi" class="text-xl font-black text-brand-600 mt-1">Level 3 (Urgent)</p>
+                <div class="grid grid-cols-2 gap-3 mb-5">
+                  <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                    <p class="text-[10px] text-slate-500 uppercase font-semibold">Triage Acuity (ESI)</p>
+                    <p id="live-esi" class="text-xl font-bold text-sky-600 mt-1">Level 3 (Urgent)</p>
                   </div>
-                  <div class="p-4 bg-slate-50/50 border border-slate-200 rounded-2xl">
-                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Physiological MEWS</p>
-                    <p id="live-mews" class="text-xl font-black text-slate-900 mt-1">0 <span class="text-xs font-medium text-slate-400">(Low Risk)</span></p>
+                  <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                    <p class="text-[10px] text-slate-500 uppercase font-semibold">Physiological MEWS</p>
+                    <p id="live-mews" class="text-xl font-bold text-slate-900 mt-1">0 <span class="text-xs font-normal text-slate-500">(Low Risk)</span></p>
                   </div>
                 </div>
 
-                <div class="mb-6">
-                  <h5 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <i data-lucide="shield-alert" class="w-4 h-4 text-rose-500"></i> Identified Red Flags
+                <div class="mb-5">
+                  <h5 class="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-rose-600"></i> Identified Red Flags
                   </h5>
-                  <div id="live-redflags" class="space-y-2">
+                  <div id="live-redflags" class="space-y-1.5">
                     <div class="text-slate-400 text-xs italic">No physiological alarms detected yet.</div>
                   </div>
                 </div>
 
-                <div class="mb-6">
-                  <h5 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-3">Differential Diagnoses (ICD-10)</h5>
-                  <div id="live-diff" class="space-y-3"></div>
+                <div class="mb-5">
+                  <h5 class="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Likely Differential Diagnoses (ICD-10)</h5>
+                  <div id="live-diff" class="space-y-2"></div>
                 </div>
 
                 <div>
-                  <h5 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-3">Recommended Workup</h5>
-                  <ul id="live-orders" class="space-y-1.5 text-xs text-slate-700 list-disc list-inside font-medium">
-                    <li class="text-slate-400 italic font-normal">Awaiting clinical data...</li>
+                  <h5 class="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Recommended Workup & Orders</h5>
+                  <ul id="live-orders" class="space-y-1 text-xs text-slate-700 list-disc list-inside">
+                    <li class="text-slate-400 italic">Awaiting clinical data...</li>
                   </ul>
                 </div>
               </div>
@@ -954,6 +1098,7 @@
       attachWizardErgonomics();
       window.calculateBMIAndVitals();
       triggerAsyncAI();
+
       document.getElementById('wizard-form').addEventListener('submit', handleWizardSubmit);
     }
 
@@ -967,16 +1112,14 @@
       }
 
       document.getElementById(`wizard-step-${currentStep}`).classList.add('hidden');
-      const prevInd = document.getElementById(`step-indicator-${currentStep}`);
-      prevInd.classList.remove('bg-brand-600', 'text-white', 'ring-4', 'ring-brand-100');
-      prevInd.classList.add('bg-white', 'border-2', 'border-brand-600', 'text-brand-600');
+      document.getElementById(`step-indicator-${currentStep}`).classList.remove('bg-sky-600', 'text-white');
+      document.getElementById(`step-indicator-${currentStep}`).classList.add('bg-slate-100', 'text-slate-500');
 
       currentStep += dir;
 
       document.getElementById(`wizard-step-${currentStep}`).classList.remove('hidden');
-      const currInd = document.getElementById(`step-indicator-${currentStep}`);
-      currInd.classList.remove('bg-white', 'border-2', 'border-brand-600', 'text-brand-600', 'border-slate-200', 'text-slate-400');
-      currInd.classList.add('bg-brand-600', 'text-white', 'ring-4', 'ring-brand-100');
+      document.getElementById(`step-indicator-${currentStep}`).classList.remove('bg-slate-100', 'text-slate-500');
+      document.getElementById(`step-indicator-${currentStep}`).classList.add('bg-sky-600', 'text-white');
 
       document.getElementById('btn-prev').classList.toggle('invisible', currentStep === 1);
       if (currentStep === 4) {
@@ -1003,6 +1146,7 @@
           const target = e.target;
           if (target.tagName === 'TEXTAREA' || target.tagName === 'BUTTON') return;
           e.preventDefault();
+
           const stepDiv = document.getElementById(`wizard-step-${currentStep}`);
           const interactables = Array.from(stepDiv.querySelectorAll('input:not([type="hidden"]), select'));
           const idx = interactables.indexOf(target);
@@ -1036,17 +1180,17 @@
         const hm = h / 100;
         const bmi = (w / (hm * hm)).toFixed(1);
         let status = 'Normal';
-        let color = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-        if (bmi < 18.5) { status = 'Underweight'; color = 'bg-amber-50 text-amber-700 border-amber-200'; }
-        else if (bmi >= 25.0 && bmi < 30.0) { status = 'Overweight'; color = 'bg-amber-50 text-amber-700 border-amber-200'; }
-        else if (bmi >= 30.0) { status = 'Obese'; color = 'bg-rose-50 text-rose-700 border-rose-200'; }
-        badgesHTML += `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold border ${color}">BMI: ${bmi} (${status})</span>`;
+        let color = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+        if (bmi < 18.5) { status = 'Underweight'; color = 'bg-amber-100 text-amber-700 border-amber-200'; }
+        else if (bmi >= 25.0 && bmi < 30.0) { status = 'Overweight'; color = 'bg-amber-100 text-amber-700 border-amber-200'; }
+        else if (bmi >= 30.0) { status = 'Obese'; color = 'bg-rose-100 text-rose-700 border-rose-200'; }
+        badgesHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold border ${color}">BMI: ${bmi} (${status})</span>`;
       }
 
-      if (temp >= 100.4) badgesHTML += `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Pyrexia</span>`;
-      if (hr > 100) badgesHTML += `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Tachycardia</span>`;
-      else if (hr > 0 && hr < 60) badgesHTML += `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-brand-50 text-brand-700 border border-brand-200">Bradycardia</span>`;
-      if (sbp > 0 && sbp < 90) badgesHTML += `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Hypotension</span>`;
+      if (temp >= 100.4) badgesHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">Pyrexia</span>`;
+      if (hr > 100) badgesHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">Tachycardia</span>`;
+      else if (hr > 0 && hr < 60) badgesHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-700 border border-sky-200">Bradycardia</span>`;
+      if (sbp > 0 && sbp < 90) badgesHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">Hypotension</span>`;
 
       badgesContainer.innerHTML = badgesHTML;
       triggerAsyncAI();
@@ -1119,7 +1263,7 @@
       clearTimeout(aiTimeout);
       const badge = document.getElementById('ai-status-badge');
       if (badge) {
-        badge.className = "px-2.5 py-1 text-[10px] rounded-lg bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 animate-pulse";
+        badge.className = "px-2 py-0.5 text-[10px] rounded bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200 animate-pulse";
         badge.innerText = "Analyzing NLP...";
       }
 
@@ -1130,22 +1274,22 @@
         const esiEl = document.getElementById('live-esi');
         if (esiEl) {
           esiEl.innerText = `Level ${analysis.esiLevel} (${analysis.urgency})`;
-          esiEl.className = `text-xl font-black mt-1 ${analysis.esiLevel === 1 ? 'text-rose-600 animate-pulse' : analysis.esiLevel === 2 ? 'text-amber-600' : 'text-brand-600'}`;
+          esiEl.className = `text-xl font-bold mt-1 ${analysis.esiLevel === 1 ? 'text-rose-600 animate-pulse' : analysis.esiLevel === 2 ? 'text-amber-600' : 'text-sky-600'}`;
         }
 
         const mewsEl = document.getElementById('live-mews');
         if (mewsEl) {
           const risk = analysis.mewsScore >= 4 ? "(Critical)" : analysis.mewsScore >= 2 ? "(Moderate)" : "(Low Risk)";
-          mewsEl.innerHTML = `${analysis.mewsScore} <span class="text-xs font-medium text-slate-400">${risk}</span>`;
-          mewsEl.className = `text-xl font-black mt-1 ${analysis.mewsScore >= 4 ? 'text-rose-600' : analysis.mewsScore >= 2 ? 'text-amber-600' : 'text-slate-900'}`;
+          mewsEl.innerHTML = `${analysis.mewsScore} <span class="text-xs font-normal text-slate-500">${risk}</span>`;
+          mewsEl.className = `text-xl font-bold mt-1 ${analysis.mewsScore >= 4 ? 'text-rose-600' : analysis.mewsScore >= 2 ? 'text-amber-600' : 'text-emerald-600'}`;
         }
 
         const rfEl = document.getElementById('live-redflags');
         if (rfEl) {
-          rfEl.innerHTML = analysis.redFlags.length === 0 ? `<div class="text-slate-400 text-xs italic font-medium">No physiological alarms detected yet.</div>` :
+          rfEl.innerHTML = analysis.redFlags.length === 0 ? `<div class="text-slate-400 text-xs italic">No physiological alarms detected yet.</div>` :
             analysis.redFlags.map(rf => `
-              <div class="flex items-center gap-2 p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold">
-                <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 text-rose-500"></i>
+              <div class="flex items-center gap-2 p-2 bg-rose-100 border border-rose-200 text-rose-700 rounded text-xs">
+                <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0 text-rose-600"></i>
                 <span>${rf}</span>
               </div>
             `).join('');
@@ -1155,12 +1299,12 @@
         if (diffEl) {
           diffEl.innerHTML = analysis.differential.map(d => `
             <div>
-              <div class="flex justify-between text-xs mb-1.5">
-                <span class="text-slate-800 font-semibold">${d.condition} <span class="text-[10px] font-mono text-slate-400">(${d.icd || 'ICD-10'})</span></span>
-                <span class="text-brand-600 font-mono font-bold">${d.probability}%</span>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-700 font-medium">${d.condition} <span class="text-[10px] font-mono text-slate-400">(${d.icd || 'ICD-10'})</span></span>
+                <span class="text-sky-600 font-mono font-bold">${d.probability}%</span>
               </div>
-              <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                <div class="bg-brand-500 h-2 rounded-full" style="width: ${d.probability}%"></div>
+              <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-sky-500 h-1.5 rounded-full" style="width: ${d.probability}%"></div>
               </div>
             </div>
           `).join('');
@@ -1172,8 +1316,8 @@
         }
 
         if (badge) {
-          badge.className = "px-2.5 py-1 text-[10px] rounded-lg bg-emerald-50 text-emerald-700 font-bold border border-emerald-200";
-          badge.innerText = "Evaluation Ready";
+          badge.className = "px-2 py-0.5 text-[10px] rounded bg-emerald-100 text-emerald-700 font-semibold border border-emerald-200";
+          badge.innerText = "Live Evaluation";
         }
         lucide.createIcons();
       }, 400);
@@ -1182,49 +1326,114 @@
     window.simulateVoiceDictation = function() {
       const hpiEl = document.getElementById('pt-hpi');
       if (!hpiEl) return;
+
+      // Initialize the Web Speech API
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        alert("Speech-to-text is not supported in this browser.");
+        alert("Speech-to-text is not supported in this browser. Please use Chrome or Edge.");
         return;
       }
+
       const recognition = new SpeechRecognition();
       recognition.lang = 'en-US';
+      
+      // Set to true if you want it to keep listening until the user stops talking for a while
       recognition.continuous = false; 
       recognition.interimResults = false;
 
-      const dictateBtn = document.querySelector('button[onclick="window.simulateVoiceDictation()"]');
+      // Locate the button to provide visual recording feedback
+      const micBtns = document.querySelectorAll('button');
+      let dictateBtn = null;
+      micBtns.forEach(btn => {
+        if (btn.getAttribute('onclick') === 'window.simulateVoiceDictation()') {
+          dictateBtn = btn;
+        }
+      });
+      
       const originalHtml = dictateBtn ? dictateBtn.innerHTML : '';
 
-      recognition.onstart = () => { if (dictateBtn) { dictateBtn.innerHTML = '<i data-lucide="mic" class="w-3.5 h-3.5 text-rose-500 animate-pulse"></i> Listening...'; lucide.createIcons(); } };
-      recognition.onresult = (event) => {
+      recognition.onstart = function() {
+        if (dictateBtn) {
+          dictateBtn.innerHTML = '<i data-lucide="mic" class="w-3.5 h-3.5 text-rose-500 animate-pulse"></i> Listening...';
+          lucide.createIcons();
+        }
+      };
+
+      recognition.onresult = function(event) {
         const transcript = event.results[0][0].transcript;
-        hpiEl.value = hpiEl.value.trim() ? `${hpiEl.value.trim()} ${transcript}` : transcript;
+        const currentText = hpiEl.value.trim();
+        
+        // Append the new transcription to any existing text
+        hpiEl.value = currentText ? `${currentText} ${transcript}` : transcript;
+        
+        // Manually dispatch an input event so the AI Decision Support triggers automatically
         hpiEl.dispatchEvent(new Event('input'));
       };
-      recognition.onerror = (event) => alert("Microphone error: " + event.error);
-      recognition.onend = () => { if (dictateBtn) { dictateBtn.innerHTML = originalHtml; lucide.createIcons(); } };
+
+      recognition.onerror = function(event) {
+        console.error("Speech recognition error:", event.error);
+        alert("Microphone error: " + event.error);
+      };
+
+      recognition.onend = function() {
+        // Revert the button back to its original state when recording stops
+        if (dictateBtn) {
+          dictateBtn.innerHTML = originalHtml;
+          lucide.createIcons();
+        }
+      };
+
+      // Request microphone access and begin listening
       recognition.start();
     };
 
     window.fillSampleTrauma = function() {
-      document.getElementById('pt-name').value = "Ashok Kumar"; document.getElementById('pt-age').value = "69"; document.getElementById('pt-gender').value = "Male"; document.getElementById('pt-blood').value = "O+";
-      document.getElementById('pt-phone').value = "+91 98111 22334"; document.getElementById('pt-abha').value = "91-4991-8822-0193";
-      document.getElementById('pt-height').value = "170"; document.getElementById('pt-weight').value = "78";
-      document.getElementById('pt-complaint').value = "Productive cough, shivering rigors, and altered mental status"; document.getElementById('pt-onset').value = "Worsening over past 48 hours"; document.getElementById('pt-duration').value = "2";
+      document.getElementById('pt-name').value = "Ashok Kumar";
+      document.getElementById('pt-age').value = "69";
+      document.getElementById('pt-gender').value = "Male";
+      document.getElementById('pt-blood').value = "O+";
+      document.getElementById('pt-phone').value = "+91 98111 22334";
+      document.getElementById('pt-abha').value = "91-4991-8822-0193";
+      document.getElementById('pt-height').value = "170";
+      document.getElementById('pt-weight').value = "78";
+      document.getElementById('pt-complaint').value = "Productive cough, shivering rigors, and altered mental status";
+      document.getElementById('pt-onset').value = "Worsening over past 48 hours";
+      document.getElementById('pt-duration').value = "2";
       document.getElementById('pt-hpi').value = "Family brought patient after noticing acute disorientation and combativeness this morning following 3 days of productive rust-colored cough and high fevers.";
-      document.getElementById('pt-pmhx').value = "COPD (Gold II), Chronic Kidney Disease Stage 3"; document.getElementById('pt-allergies').value = "Sulfa drugs"; document.getElementById('pt-meds').value = "Tiotropium, Formoterol inhaler, Lisinopril";
-      document.getElementById('vital-hr').value = "124"; document.getElementById('vital-sbp').value = "84"; document.getElementById('vital-dbp').value = "48"; document.getElementById('vital-rr').value = "28"; document.getElementById('vital-spo2').value = "89"; document.getElementById('vital-temp').value = "102.9";
+      document.getElementById('pt-pmhx').value = "COPD (Gold II), Chronic Kidney Disease Stage 3";
+      document.getElementById('pt-allergies').value = "Sulfa drugs";
+      document.getElementById('pt-meds').value = "Tiotropium, Formoterol inhaler, Lisinopril";
+      document.getElementById('vital-hr').value = "124";
+      document.getElementById('vital-sbp').value = "84";
+      document.getElementById('vital-dbp').value = "48";
+      document.getElementById('vital-rr').value = "28";
+      document.getElementById('vital-spo2').value = "89";
+      document.getElementById('vital-temp').value = "102.9";
       window.calculateBMIAndVitals();
     };
 
     window.fillSampleCardiac = function() {
-      document.getElementById('pt-name').value = "Rajesh Gupta"; document.getElementById('pt-age').value = "58"; document.getElementById('pt-gender').value = "Male"; document.getElementById('pt-blood').value = "A-";
-      document.getElementById('pt-phone').value = "+91 99988 77766"; document.getElementById('pt-abha').value = "91-1002-3994-5541";
-      document.getElementById('pt-height').value = "172"; document.getElementById('pt-weight').value = "85";
-      document.getElementById('pt-complaint').value = "Heavy retrosternal pressure, left arm paresthesia, diaphoresis"; document.getElementById('pt-onset').value = "Sudden onset 45 minutes ago"; document.getElementById('pt-duration').value = "1";
+      document.getElementById('pt-name').value = "Rajesh Gupta";
+      document.getElementById('pt-age').value = "58";
+      document.getElementById('pt-gender').value = "Male";
+      document.getElementById('pt-blood').value = "A-";
+      document.getElementById('pt-phone').value = "+91 99988 77766";
+      document.getElementById('pt-abha').value = "91-1002-3994-5541";
+      document.getElementById('pt-height').value = "172";
+      document.getElementById('pt-weight').value = "85";
+      document.getElementById('pt-complaint').value = "Heavy retrosternal pressure, left arm paresthesia, diaphoresis";
+      document.getElementById('pt-onset').value = "Sudden onset 45 minutes ago";
+      document.getElementById('pt-duration').value = "1";
       document.getElementById('pt-hpi').value = "Woke up with severe heavy chest pressure described as an elephant sitting on his chest. Accompanied by nausea, clamminess, and mild dyspnea.";
-      document.getElementById('pt-pmhx').value = "Hyperlipidemia, Essential Hypertension, Smoker (30 pack-years)"; document.getElementById('pt-allergies').value = "NKDA"; document.getElementById('pt-meds').value = "Amlodipine 10mg, Rosuvastatin 20mg";
-      document.getElementById('vital-hr').value = "108"; document.getElementById('vital-sbp').value = "138"; document.getElementById('vital-dbp').value = "86"; document.getElementById('vital-rr').value = "22"; document.getElementById('vital-spo2').value = "94"; document.getElementById('vital-temp').value = "98.6";
+      document.getElementById('pt-pmhx').value = "Hyperlipidemia, Essential Hypertension, Smoker (30 pack-years)";
+      document.getElementById('pt-allergies').value = "NKDA";
+      document.getElementById('pt-meds').value = "Amlodipine 10mg, Rosuvastatin 20mg";
+      document.getElementById('vital-hr').value = "108";
+      document.getElementById('vital-sbp').value = "138";
+      document.getElementById('vital-dbp').value = "86";
+      document.getElementById('vital-rr').value = "22";
+      document.getElementById('vital-spo2').value = "94";
+      document.getElementById('vital-temp').value = "98.6";
       window.calculateBMIAndVitals();
     };
 
@@ -1245,16 +1454,37 @@
         uhid: `MED-DEL-2026-${Math.floor(1000 + Math.random() * 9000)}`,
         abhaId: data.abhaId || `91-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
         caseId: `CS-${Math.floor(1000 + Math.random() * 9000)}`,
-        name: data.name, age: data.age, gender: data.gender, bloodGroup: data.bloodGroup || "N/A", phone: data.phone || "N/A", height: data.height, weight: data.weight,
-        attendingPhysician: userProfile?.name || "Dr. Vikram Sharma, MD", department: "Emergency Medicine & Acute Care", bedAssigned: "ER Bay 03",
-        chiefComplaint: data.complaint, onset: data.onset, duration: data.duration, hpi: data.hpi, aggravating: data.aggravating, ameliorating: data.ameliorating,
-        pmhx: data.pmhx || "None documented", fhx: data.fhx || "None documented", medications: data.meds || "None", allergies: data.allergies || "NKDA", ros: data.ros || "Non-contributory", exam: data.exam || "No acute distress.",
+        name: data.name,
+        age: data.age,
+        gender: data.gender,
+        bloodGroup: data.bloodGroup || "N/A",
+        phone: data.phone || "N/A",
+        height: data.height,
+        weight: data.weight,
+        attendingPhysician: userProfile?.name || "Dr. Vikram Sharma, MD",
+        department: "Emergency Medicine & Acute Care",
+        bedAssigned: "ER Bay 03",
+        chiefComplaint: data.complaint,
+        onset: data.onset,
+        duration: data.duration,
+        hpi: data.hpi,
+        aggravating: data.aggravating,
+        ameliorating: data.ameliorating,
+        pmhx: data.pmhx || "None documented",
+        fhx: data.fhx || "None documented",
+        medications: data.meds || "None",
+        allergies: data.allergies || "NKDA",
+        ros: data.ros || "Non-contributory",
+        exam: data.exam || "No acute distress.",
         prescription: data.prescription || "Awaiting physician sign-off.",
         structuredRx: [
           { drug: "Isotonic Saline 0.9%", form: "Infusion", dose: "500 mL", route: "IV", sig: "STAT", duration: "30 mins", instructions: "Bolus infusion" },
           { drug: "Pantoprazole", form: "Inj", dose: "40 mg", route: "IV", sig: "OD", duration: "3 Days", instructions: "Slow IV push" }
         ],
-        painMarkers: data.painMarkers, vitals: data.vitals, timestamp: new Date().toISOString(), analysis: analysis
+        painMarkers: data.painMarkers,
+        vitals: data.vitals,
+        timestamp: new Date().toISOString(),
+        analysis: analysis
       };
 
       try {
@@ -1266,38 +1496,47 @@
         console.error("Failed to commit intake to Firestore:", err);
         alert("Firestore error: " + err.message);
         submitBtn.disabled = false;
-        submitBtn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> Save Intake`;
+        submitBtn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> Save to Cloud & Admit`;
         lucide.createIcons();
       }
     }
 
+    // ============================================================================
+    // VIEW 3: PATIENT DIRECTORY
+    // ============================================================================
     function renderPatientsView(container) {
+      const patients = livePatients;
+
       container.innerHTML = `
-        <div class="bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-soft max-w-7xl mx-auto">
-          <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white">
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm max-w-7xl mx-auto">
+          <div class="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50">
             <div>
-              <h3 class="font-bold text-slate-900 text-lg tracking-tight">Patient Medical Registry</h3>
-              <p class="text-xs text-slate-500 mt-0.5">Real-time searchable hospital directory</p>
+              <h3 class="font-bold text-slate-900 text-base">Patient Medical Registry</h3>
+              <p class="text-xs text-slate-500">Real-time searchable hospital directory backed by Cloud Firestore</p>
             </div>
             <div class="w-full sm:w-80 relative">
-              <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
-              <input type="text" id="patient-search-input" oninput="window.filterPatientsList()" placeholder="Search UHID, MRN, Name, Phone..." class="w-full bg-slate-50/50 border border-slate-200 rounded-xl pl-10 pr-8 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 transition-all shadow-sm">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+              <input type="text" id="patient-search-input" oninput="window.filterPatientsList()" placeholder="Search UHID, MRN, Name, Phone..." class="w-full bg-white border border-slate-300 rounded-lg pl-9 pr-8 py-2 text-xs text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition">
+              <button id="search-clear-btn" onclick="window.clearDirectorySearch()" class="hidden absolute right-2.5 top-2 p-0.5 text-slate-400 hover:text-slate-900 rounded">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              </button>
             </div>
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm whitespace-nowrap">
-              <thead class="bg-slate-50/50 text-slate-500 border-b border-slate-200 text-xs uppercase tracking-wider font-bold">
+            <table class="w-full text-left text-xs whitespace-nowrap">
+              <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
                 <tr>
-                  <th class="py-4 px-6">UHID / MRN</th>
-                  <th class="py-4 px-6">Patient Demographics</th>
-                  <th class="py-4 px-6">Triage Acuity</th>
-                  <th class="py-4 px-6">Chief Complaint</th>
-                  <th class="py-4 px-6">ICD-10 Impression</th>
-                  <th class="py-4 px-6 text-right">Actions</th>
+                  <th class="py-3.5 px-4 font-semibold">UHID / MRN</th>
+                  <th class="py-3.5 px-4 font-semibold">Patient Demographics</th>
+                  <th class="py-3.5 px-4 font-semibold">Triage Acuity</th>
+                  <th class="py-3.5 px-4 font-semibold">Chief Complaint</th>
+                  <th class="py-3.5 px-4 font-semibold">Primary ICD-10 Impression</th>
+                  <th class="py-3.5 px-4 font-semibold">Encounter Time</th>
+                  <th class="py-3.5 px-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody id="patients-table-body" class="divide-y divide-slate-100 bg-white">
-                ${renderPatientTableRows(livePatients)}
+              <tbody id="patients-table-body" class="divide-y divide-slate-100 text-slate-700 bg-white">
+                ${renderPatientTableRows(patients)}
               </tbody>
             </table>
           </div>
@@ -1306,242 +1545,415 @@
     }
 
     function renderPatientTableRows(patientsList) {
-      if (patientsList.length === 0) return `<tr><td colspan="6" class="text-center py-8 text-slate-400 font-medium">No patient records found in directory.</td></tr>`;
+      if (patientsList.length === 0) {
+        return `<tr><td colspan="7" class="text-center py-8 text-slate-400">No patient records found in directory.</td></tr>`;
+      }
 
-      return patientsList.map(p => {
-        let badgeStyle = p.analysis?.esiLevel === 1 ? "bg-rose-50 text-rose-700 border-rose-200" : p.analysis?.esiLevel === 2 ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-sky-50 text-sky-700 border-sky-200";
-        return `
-        <tr class="hover:bg-slate-50/50 transition-colors">
-          <td class="py-4 px-6 font-mono">
+      return patientsList.map(p => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-3 px-4 font-mono">
             <div class="font-bold text-slate-900">${p.uhid || p.id}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">${p.id}</div>
+            <div class="text-[10px] text-slate-400">${p.id}</div>
           </td>
-          <td class="py-4 px-6">
-            <div class="font-bold text-slate-800">${p.name}</div>
-            <div class="text-[11px] text-slate-500 mt-0.5 font-medium">${p.age}y • ${p.gender} • BG: <span class="text-rose-600 font-bold">${p.bloodGroup || 'N/A'}</span></div>
+          <td class="py-3 px-4">
+            <div class="font-semibold text-slate-900">${p.name}</div>
+            <div class="text-[11px] text-slate-500">${p.age}y • ${p.gender} • BG: <span class="text-rose-600 font-semibold">${p.bloodGroup || 'N/A'}</span></div>
           </td>
-          <td class="py-4 px-6">
-            <span class="px-3 py-1 rounded-lg text-[11px] font-bold border ${badgeStyle}">ESI ${p.analysis?.esiLevel || 3}</span>
+          <td class="py-3 px-4">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
+              p.analysis?.esiLevel === 1 ? 'bg-rose-100 text-rose-700 border border-rose-200' :
+              p.analysis?.esiLevel === 2 ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+              'bg-sky-100 text-sky-700 border border-sky-200'
+            }">ESI ${p.analysis?.esiLevel || 3}</span>
           </td>
-          <td class="py-4 px-6 max-w-xs truncate text-slate-600 font-medium">${p.chiefComplaint}</td>
-          <td class="py-4 px-6 text-brand-600 font-semibold">${p.analysis?.primaryIcd10 || p.analysis?.differential?.[0]?.condition || 'Evaluation'}</td>
-          <td class="py-4 px-6 text-right space-x-2">
-            <button onclick="window.openModal('${p.id}')" class="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-xl hover:shadow-sm active:scale-95 transition-all text-slate-700">View</button>
-            <button onclick="window.appRouter('case-record', {id: '${p.id}'})" class="px-3 py-1.5 text-xs font-semibold bg-brand-50 border border-brand-200 rounded-xl hover:shadow-sm active:scale-95 transition-all text-brand-700">Chart</button>
-            <button onclick="window.deletePatientRecord('${p.id}')" class="px-2 py-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          <td class="py-3 px-4 max-w-xs truncate text-slate-600">${p.chiefComplaint}</td>
+          <td class="py-3 px-4 text-sky-700 font-medium">${p.analysis?.primaryIcd10 || p.analysis?.differential?.[0]?.condition || 'Under Evaluation'}</td>
+          <td class="py-3 px-4 text-slate-400">${new Date(p.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+          <td class="py-3 px-4 text-right space-x-2">
+            <button onclick="window.openModal('${p.id}')" class="px-2.5 py-1 text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded transition border border-slate-200">Quick EMR</button>
+            <button onclick="window.appRouter('case-record', {id: '${p.id}'})" class="px-2.5 py-1 text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 rounded transition border border-sky-200 font-medium">Official Chart</button>
+            <button onclick="window.openEditModal('${p.id}')" class="px-2.5 py-1 text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 rounded transition border border-emerald-200 font-medium">Edit</button>
+            <button onclick="window.deletePatientRecord('${p.id}')" class="px-2 py-1 text-rose-600 hover:text-rose-700 hover:bg-rose-100 rounded transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i>
+            </button>
           </td>
         </tr>
-      `}).join('');
+      `).join('');
     }
 
     window.filterPatientsList = function() {
       const q = document.getElementById('patient-search-input').value.toLowerCase();
+      const clearBtn = document.getElementById('search-clear-btn');
+      clearBtn.classList.toggle('hidden', q.length === 0);
+
       const filtered = livePatients.filter(p => 
-        p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || (p.uhid && p.uhid.toLowerCase().includes(q)) ||
-        p.chiefComplaint.toLowerCase().includes(q) || p.analysis?.differential?.some(d => d.condition.toLowerCase().includes(q))
+        p.name.toLowerCase().includes(q) ||
+        p.id.toLowerCase().includes(q) ||
+        (p.uhid && p.uhid.toLowerCase().includes(q)) ||
+        (p.phone && p.phone.includes(q)) ||
+        p.chiefComplaint.toLowerCase().includes(q) ||
+        p.analysis?.differential?.some(d => d.condition.toLowerCase().includes(q))
       );
       document.getElementById('patients-table-body').innerHTML = renderPatientTableRows(filtered);
       lucide.createIcons();
+    };
+
+    window.clearDirectorySearch = function() {
+      const input = document.getElementById('patient-search-input');
+      input.value = '';
+      input.focus();
+      window.filterPatientsList();
     };
 
     window.deletePatientRecord = async function(id) {
       if (!currentUser) return;
       if (confirm(`Permanently remove record ${id} from Firestore?`)) {
         try {
-          await deleteDoc(doc(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'patients', id));
+          const docRef = doc(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'patients', id);
+          await deleteDoc(docRef);
           showCloudSyncToast(`Record ${id} removed from Firestore`);
-        } catch (err) { alert("Error removing record: " + err.message); }
+        } catch (err) {
+          alert("Error removing record: " + err.message);
+        }
       }
     };
 
+    // ============================================================================
+    // VIEW 4: CLINICAL CASE RECORD & PRESCRIPTION
+    // ============================================================================
     function renderCaseRecord(container, patientId) {
       const pt = livePatients.find(p => p.id === patientId) || livePatients[0];
-      if (!pt) { container.innerHTML = `<div class="p-8 text-center text-slate-500 font-medium">Clinical record not found.</div>`; return; }
+      if (!pt) {
+        container.innerHTML = `<div class="p-8 text-center text-slate-500">Clinical record not found.</div>`;
+        return;
+      }
 
-      const sbp = pt.vitals?.sbp || 120; const dbp = pt.vitals?.dbp || 80; const hr = pt.vitals?.hr || 75;
+      const sbp = pt.vitals?.sbp || 120;
+      const dbp = pt.vitals?.dbp || 80;
+      const hr = pt.vitals?.hr || 75;
       const map = (dbp + (sbp - dbp) / 3).toFixed(1);
       const shockIndex = sbp > 0 ? (hr / sbp).toFixed(2) : '--';
-      const pinsHtml = (pt.painMarkers || []).map(m => `<div class="pain-pin" style="left: ${m.x * 100}%; top: ${m.y * 100}%;"></div>`).join('');
-      const rxList = pt.structuredRx || [{ drug: "Ceftriaxone", form: "Inj", dose: "1 g", route: "IV", sig: "1-0-1", duration: "5 Days", instructions: "Post sensitivity test" }];
       
+      const pinsHtml = (pt.painMarkers || []).map(m =>
+        `<div class="pain-pin" style="left: ${m.x * 100}%; top: ${m.y * 100}%;"></div>`
+      ).join('');
+
+      const rxList = pt.structuredRx || [
+        { drug: "Ceftriaxone", form: "Inj", dose: "1 g", route: "IV", sig: "1-0-1", duration: "5 Days", instructions: "Post sensitivity test" },
+        { drug: "Pantoprazole", form: "Tab", dose: "40 mg", route: "Oral", sig: "1-0-0", duration: "14 Days", instructions: "Empty stomach in morning" }
+      ];
+
       const rxRows = rxList.map((m, idx) => `
-        <tr class="border-b border-slate-100">
-          <td class="py-3 px-4 font-mono text-slate-400 text-xs">${idx + 1}</td>
-          <td class="py-3 px-4"><span class="font-bold text-slate-900 block">${m.drug}</span><span class="text-[10px] text-slate-500">${m.form} • ${m.dose}</span></td>
-          <td class="py-3 px-4 font-medium text-slate-700">${m.route}</td>
-          <td class="py-3 px-4 font-mono font-bold text-brand-600">${m.sig}</td>
-          <td class="py-3 px-4 text-slate-700 font-medium">${m.duration}</td>
-          <td class="py-3 px-4 text-slate-500 text-xs italic">${m.instructions}</td>
+        <tr class="border-b border-slate-200">
+          <td class="py-2.5 px-3 font-mono text-slate-400 text-xs">${idx + 1}</td>
+          <td class="py-2.5 px-3">
+            <span class="font-bold text-slate-900">${m.drug}</span>
+            <span class="text-[10px] text-slate-500 block">${m.form} • ${m.dose}</span>
+          </td>
+          <td class="py-2.5 px-3 font-medium text-slate-700">${m.route}</td>
+          <td class="py-2.5 px-3 font-mono font-bold text-sky-700">${m.sig}</td>
+          <td class="py-2.5 px-3 text-slate-700">${m.duration}</td>
+          <td class="py-2.5 px-3 text-slate-500 text-xs italic">${m.instructions}</td>
         </tr>
       `).join('');
 
       container.innerHTML = `
         <div class="max-w-5xl mx-auto space-y-6">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/60 pb-5 no-print">
-            <div class="flex items-center gap-3">
-              <button onclick="window.appRouter('dashboard')" class="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 transition-all active:scale-95 shadow-sm">
-                <i data-lucide="arrow-left" class="w-5 h-5"></i>
-              </button>
-              <div>
-                <h2 class="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">Tertiary Clinical Record</h2>
-                <p class="text-xs text-slate-500 font-medium mt-0.5">NABH & JCI Compliant Format</p>
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-4 no-print">
+            <div>
+              <div class="flex items-center gap-2">
+                <button onclick="window.appRouter('dashboard')" class="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-900 mr-1 transition">
+                  <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </button>
+                <div>
+                  <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="file-check" class="w-6 h-6 text-sky-600"></i> Tertiary Clinical Case Record & Discharge Order
+                  </h2>
+                  <p class="text-xs text-slate-500 mt-0.5">NABH & JCI Compliant Format • ABDM FHIR Resource Verified</p>
+                </div>
               </div>
             </div>
             <div class="flex items-center gap-3">
-              <button onclick="window.copyFullSoapNote('${pt.id}')" class="bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border border-slate-200 shadow-sm flex items-center gap-2 active:scale-95">
-                <i data-lucide="copy" class="w-4 h-4"></i> Copy Note
+              <button onclick="window.copyFullSoapNote('${pt.id}')" class="bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 rounded-lg text-xs font-medium transition border border-slate-300 flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="copy" class="w-4 h-4"></i> Copy Clinical Note
               </button>
-              <button id="export-btn" onclick="window.print()" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-soft flex items-center gap-2 active:scale-95">
-                <i data-lucide="printer" class="w-4 h-4"></i> Export Medical PDF
+              <button id="export-btn" onclick="window.print()" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg text-xs font-semibold transition shadow-sm flex items-center gap-2">
+                <i data-lucide="printer" class="w-4 h-4"></i> Print / Export Medical PDF
               </button>
             </div>
           </div>
 
-          <div class="print-document bg-white p-8 sm:p-12 mb-12 shadow-floating rounded-3xl border border-slate-200/60">
-            <div class="border-b-2 border-slate-900 pb-6 mb-8">
+          <!-- Printable Document Container -->
+          <div class="print-document bg-white p-8 sm:p-12 mb-12">
+            <div class="border-b-2 border-slate-900 pb-5 mb-6">
               <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div class="flex items-center gap-4">
-                  <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center font-bold text-brand-600 no-print-shadow">
-                    <i data-lucide="cross" class="w-8 h-8"></i>
+                  <div class="w-14 h-14 text-orange flex items-center justify-center font-bold text-2xl no-print-shadow">
+                    <i data-lucide="cross" class="w-12 h-12"></i>
                   </div>
                   <div>
-                    <h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase">Medanta - The Medicity</h1>
-                    <p class="text-xs text-slate-600 font-medium mt-1">CH Bakhtawar Singh Road, Sector 38, Gurugram, India</p>
+                    <h1 class="text-2xl font-black tracking-wide text-slate-800 uppercase">Medanta - The Medicity</h1>
+                    <p class="text-xs text-slate-600 font-medium">CH Bakhtawar Singh Road, Sector 38, Gurugram, Haryana 122001, India</p>
+                    <p class="text-[10px] text-slate-400 font-semibold mt-0.5">JCI & NABH Accredited Tertiary Quaternary Medical Centre • Emergency & Trauma Registry</p>
                   </div>
                 </div>
-                <div class="text-right sm:border-l sm:border-slate-100 sm:pl-6">
-                  <p class="font-mono text-xs font-bold text-slate-800 tracking-widest">${pt.uhid || 'MED-DEL-2026-8819'}</p>
-                  <p class="text-[10px] text-emerald-600 font-bold tracking-wider flex items-center justify-end gap-1 mt-1">
-                    <i data-lucide="check-circle" class="w-3.5 h-3.5 inline"></i> ABHA: ${pt.abhaId || '91-4582-1920-3341'}
+                
+                <div class="text-right sm:border-l sm:border-slate-200 sm:pl-6">
+                  <div class="inline-block p-1 bg-slate-50 border border-slate-200 rounded">
+                    <div class="flex items-center justify-end space-x-0.5 h-6 px-1">
+                      <span class="barcode-line w-1"></span><span class="barcode-line w-0.5"></span><span class="barcode-line w-1.5"></span>
+                      <span class="barcode-line w-0.5"></span><span class="barcode-line w-2"></span><span class="barcode-line w-0.5"></span>
+                      <span class="barcode-line w-1"></span><span class="barcode-line w-0.5"></span><span class="barcode-line w-1.5"></span>
+                      <span class="barcode-line w-0.5"></span><span class="barcode-line w-1"></span>
+                    </div>
+                  </div>
+                  <p class="font-mono text-[10px] font-bold text-slate-800 tracking-wider mt-1">${pt.uhid || 'MED-DEL-2026-8819'}</p>
+                  <p class="text-[9px] text-emerald-600 font-semibold tracking-wide flex items-center justify-end gap-1">
+                    <i data-lucide="check-circle" class="w-3 h-3 inline"></i> ABHA: ${pt.abhaId || '91-4582-1920-3341'}
                   </p>
                 </div>
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap justify-between items-center text-[11px] text-slate-600 bg-slate-50 px-3 py-2 rounded-lg">
+                <span><strong>Encounter Type:</strong> Emergency Acute Care</span>
+                <span><strong>Department:</strong> ${pt.department || 'Emergency Medicine & Critical Care'}</span>
+                <span><strong>Attending Consultant:</strong> ${pt.attendingPhysician || userProfile?.name || 'Dr. Vikram Sharma, MD'}</span>
+                <span><strong>Encounter ID:</strong> <span class="font-mono">${pt.caseId || 'CS-5011'}</span></span>
               </div>
             </div>
 
             <!-- Patient Demographics -->
-            <div class="print-box rounded-2xl p-5 mb-8 bg-slate-50/50 border border-slate-200">
-              <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-y-4 gap-x-5 text-sm">
-                <div><span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Patient Name</span><strong class="text-slate-900">${pt.name}</strong></div>
-                <div><span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Age / Gender</span><span class="text-slate-800 font-semibold">${pt.age} Yrs / ${pt.gender}</span></div>
-                <div><span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">UHID / MRN</span><span class="font-mono text-slate-800 font-bold">${pt.uhid || pt.id}</span></div>
-                <div><span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Blood Group</span><span class="font-black text-rose-600">${pt.bloodGroup || 'Unknown'}</span></div>
-                <div><span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Contact Number</span><span class="text-slate-800 font-medium">${pt.phone || 'N/A'}</span></div>
-                <div><span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Bed / Bay</span><span class="font-bold text-brand-700 bg-brand-50 px-2 py-1 rounded-lg">${pt.bedAssigned || 'Resus 01'}</span></div>
+            <div class="print-box rounded-xl p-4 mb-6 bg-white border border-slate-300 shadow-sm">
+              <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-y-3 gap-x-4 text-xs">
+                <div><span class="text-[10px] text-slate-400 uppercase font-bold block">Patient Name</span><strong class="text-slate-900 text-sm">${pt.name}</strong></div>
+                <div><span class="text-[10px] text-slate-400 uppercase font-bold block">Age / Gender</span><span class="text-slate-800 font-medium">${pt.age} Yrs / ${pt.gender}</span></div>
+                <div><span class="text-[10px] text-slate-400 uppercase font-bold block">UHID / MRN</span><span class="font-mono text-slate-800 font-semibold">${pt.uhid || pt.id}</span></div>
+                <div><span class="text-[10px] text-slate-400 uppercase font-bold block">Blood Group</span><span class="font-bold text-rose-600">${pt.bloodGroup || 'Unknown'}</span></div>
+                <div><span class="text-[10px] text-slate-400 uppercase font-bold block">Contact Number</span><span class="text-slate-800">${pt.phone || 'N/A'}</span></div>
+                <div><span class="text-[10px] text-slate-400 uppercase font-bold block">Bed / Bay</span><span class="font-bold text-sky-800 bg-sky-50 px-1.5 py-0.5 rounded">${pt.bedAssigned || 'Resus 01'}</span></div>
               </div>
             </div>
 
             <!-- Vitals Profile -->
-            <div class="print-box rounded-2xl p-5 mb-8 bg-white border border-slate-200">
-              <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                <h3 class="text-xs font-bold uppercase tracking-widest text-slate-800 flex items-center gap-2">
-                  <i data-lucide="activity" class="w-4 h-4 text-emerald-500"></i> Hemodynamic Profile
+            <div class="print-box rounded-xl p-4 mb-6 bg-slate-50 border border-slate-300">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <i data-lucide="activity" class="w-4 h-4 text-emerald-600"></i> Hemodynamic Profile & Physiological Baseline
                 </h3>
-                <div class="flex items-center gap-3">
-                  <span class="px-3 py-1 text-[11px] font-bold rounded-lg ${pt.analysis?.esiLevel === 1 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'} border">
-                    ESI Level ${pt.analysis?.esiLevel || 3}
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 text-[10px] font-bold rounded ${pt.analysis?.esiLevel === 1 ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-amber-100 text-amber-800 border-amber-300'} border">
+                    ESI Level ${pt.analysis?.esiLevel || 3} (${pt.analysis?.urgency || 'Urgent'})
                   </span>
+                  <span class="text-[11px] font-mono text-slate-600 font-bold">MEWS: ${pt.analysis?.mewsScore || 0}</span>
                 </div>
               </div>
-              <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 text-center text-sm">
-                <div class="bg-slate-50/50 p-3 rounded-xl border border-slate-200">
-                  <span class="text-[10px] text-slate-500 font-semibold uppercase block mb-1">Blood Pressure</span>
-                  <strong class="font-mono text-slate-900">${sbp}/${dbp}</strong>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 text-center text-xs">
+                <div class="bg-white p-2 rounded border border-slate-200">
+                  <span class="text-[9px] text-slate-400 uppercase block">Blood Pressure</span>
+                  <strong class="font-mono text-slate-900">${sbp}/${dbp}</strong> <span class="text-[10px] text-slate-500">mmHg</span>
                 </div>
-                <div class="bg-slate-50/50 p-3 rounded-xl border border-slate-200">
-                  <span class="text-[10px] text-slate-500 font-semibold uppercase block mb-1">Heart Rate</span>
-                  <strong class="font-mono ${hr > 100 ? 'text-rose-600' : 'text-slate-900'}">${hr}</strong>
+                <div class="bg-white p-2 rounded border border-slate-200">
+                  <span class="text-[9px] text-slate-400 uppercase block">Heart Rate</span>
+                  <strong class="font-mono ${hr > 100 ? 'text-rose-600 font-bold' : 'text-slate-900'}">${hr}</strong> <span class="text-[10px] text-slate-500">bpm</span>
                 </div>
-                <div class="bg-slate-50/50 p-3 rounded-xl border border-slate-200">
-                  <span class="text-[10px] text-slate-500 font-semibold uppercase block mb-1">SpO2 (RA)</span>
-                  <strong class="font-mono ${(pt.vitals?.spo2 || 98) < 94 ? 'text-rose-600' : 'text-slate-900'}">${pt.vitals?.spo2 || 98}%</strong>
+                <div class="bg-white p-2 rounded border border-slate-200">
+                  <span class="text-[9px] text-slate-400 uppercase block">Mean Art. Press. (MAP)</span>
+                  <strong class="font-mono ${map < 65 ? 'text-rose-600 font-bold' : 'text-slate-900'}">${map}</strong> <span class="text-[10px] text-slate-500">mmHg</span>
                 </div>
-                <div class="bg-slate-50/50 p-3 rounded-xl border border-slate-200">
-                  <span class="text-[10px] text-slate-500 font-semibold uppercase block mb-1">Resp. Rate</span>
-                  <strong class="font-mono text-slate-900">${pt.vitals?.rr || 16}</strong>
+                <div class="bg-white p-2 rounded border border-slate-200">
+                  <span class="text-[9px] text-slate-400 uppercase block">Shock Index</span>
+                  <strong class="font-mono ${shockIndex >= 1.0 ? 'text-rose-600 font-bold' : 'text-slate-900'}">${shockIndex}</strong>
                 </div>
-                <div class="bg-slate-50/50 p-3 rounded-xl border border-slate-200">
-                  <span class="text-[10px] text-slate-500 font-semibold uppercase block mb-1">Temperature</span>
-                  <strong class="font-mono text-slate-900">${pt.vitals?.temp || 98.6}°F</strong>
+                <div class="bg-white p-2 rounded border border-slate-200">
+                  <span class="text-[9px] text-slate-400 uppercase block">SpO2 (Pulse Ox)</span>
+                  <strong class="font-mono ${(pt.vitals?.spo2 || 98) < 94 ? 'text-rose-600 font-bold' : 'text-slate-900'}">${pt.vitals?.spo2 || 98}%</strong> <span class="text-[10px] text-slate-500">RA</span>
+                </div>
+                <div class="bg-white p-2 rounded border border-slate-200">
+                  <span class="text-[9px] text-slate-400 uppercase block">Resp. Rate</span>
+                  <strong class="font-mono text-slate-900">${pt.vitals?.rr || 16}</strong> <span class="text-[10px] text-slate-500">/min</span>
+                </div>
+                <div class="bg-white p-2 rounded border border-slate-200">
+                  <span class="text-[9px] text-slate-400 uppercase block">Temperature</span>
+                  <strong class="font-mono text-slate-900">${pt.vitals?.temp || 98.6}</strong> <span class="text-[10px] text-slate-500">°F</span>
+                </div>
+              </div>
+
+              ${pt.analysis?.redFlags?.length > 0 ? `
+              <div class="mt-3 p-2.5 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-2">
+                <i data-lucide="shield-alert" class="w-4 h-4 text-rose-600 shrink-0 mt-0.5"></i>
+                <div>
+                  <span class="text-[10px] font-bold text-rose-800 uppercase tracking-wider block">Identified Clinical Red Flags</span>
+                  <p class="text-xs text-rose-700 mt-0.5 font-medium">${pt.analysis.redFlags.join(' • ')}</p>
+                </div>
+              </div>` : ''}
+            </div>
+
+            <!-- History and Physical Exam -->
+            <div class="print-flatten grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div class="space-y-4 text-xs">
+                <div class="print-box border border-slate-300 p-4 rounded-xl">
+                  <h4 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] border-b border-slate-200 pb-1.5 mb-2.5 flex items-center gap-1.5">
+                    <i data-lucide="clipboard" class="w-3.5 h-3.5 text-sky-600"></i> Chief Complaint & HPI
+                  </h4>
+                  <p class="text-slate-900 font-semibold mb-1"><span class="text-slate-400 uppercase text-[10px]">Presenting Complaint:</span> ${pt.chiefComplaint}</p>
+                  <p class="text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded border border-slate-200 whitespace-pre-wrap">${pt.hpi || 'None documented.'}</p>
+                  <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100 text-slate-500">
+                    <div><strong>Onset:</strong> ${pt.onset || 'N/A'}</div>
+                    <div><strong>Duration:</strong> ${pt.duration ? pt.duration + ' Days' : 'N/A'}</div>
+                  </div>
+                </div>
+
+                <div class="print-box border border-slate-300 p-4 rounded-xl">
+                  <h4 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] border-b border-slate-200 pb-1.5 mb-2.5 flex items-center gap-1.5">
+                    <i data-lucide="shield" class="w-3.5 h-3.5 text-rose-600"></i> Allergies & Chronic Conditions
+                  </h4>
+                  <div class="p-2 bg-rose-50 border border-rose-200 rounded text-rose-800 font-bold mb-2">
+                    <span class="text-[9px] uppercase tracking-wider block text-rose-500">Documented Drug Allergies</span>
+                    ${pt.allergies || 'NKDA (No Known Drug Allergies)'}
+                  </div>
+                  <div class="space-y-1 text-slate-700">
+                    <p><strong>Past Medical History:</strong> ${pt.pmhx || 'None'}</p>
+                    <p><strong>Family & Social History:</strong> ${pt.fhx || 'Non-contributory'}</p>
+                    <p><strong>Current Medications:</strong> ${pt.medications || 'None'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-4 text-xs">
+                <div class="print-box border border-slate-300 p-4 rounded-xl">
+                  <h4 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] border-b border-slate-200 pb-1.5 mb-2.5 flex items-center gap-1.5">
+                    <i data-lucide="stethoscope" class="w-3.5 h-3.5 text-sky-600"></i> Systemic Physical Examination
+                  </h4>
+                  <div class="bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-800 whitespace-pre-wrap leading-relaxed">
+                    ${pt.exam || 'No focal physical examination abnormalities recorded.'}
+                  </div>
+
+                  <div class="mt-4 pt-3 border-t border-slate-200 text-center">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Anatomical Symptom Mapping</span>
+                    <div id="body-map-container" style="page-break-inside: avoid; break-inside: avoid; display: block; margin: 0 auto; height: 180px; width: 110px;">
+                      ${pinsHtml}
+                    </div>
+                    <p class="text-[9px] text-slate-400 mt-1">Localized Markers: ${pt.painMarkers ? pt.painMarkers.length : 0}</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- History and Physical Exam -->
-            <div class="print-flatten grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div class="space-y-6 text-sm">
-                <div class="print-box">
-                  <h4 class="font-bold text-slate-900 uppercase tracking-widest text-[11px] border-b border-slate-100 pb-2 mb-3 flex items-center gap-2">
-                    <i data-lucide="clipboard" class="w-4 h-4 text-brand-600"></i> Chief Complaint & HPI
-                  </h4>
-                  <p class="text-slate-900 font-bold mb-2">${pt.chiefComplaint}</p>
-                  <p class="text-slate-700 leading-relaxed bg-slate-50/50 p-4 rounded-xl border border-slate-200 whitespace-pre-wrap">${pt.hpi || 'None documented.'}</p>
-                </div>
+            <!-- Provisional Diagnosis & ICD-10 -->
+            <div class="print-box rounded-xl p-4 mb-6 bg-white border-2 border-sky-600 shadow-sm">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+                  <i data-lucide="brain-circuit" class="w-4 h-4 text-sky-600"></i> Clinical Impression & ICD-10 Classification
+                </h3>
+                <span class="text-xs font-mono font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                  Primary ICD: ${pt.analysis?.primaryIcd10 || pt.analysis?.differential?.[0]?.icd || 'I21.0'}
+                </span>
               </div>
-              <div class="space-y-6 text-sm">
-                <div class="print-box">
-                  <h4 class="font-bold text-slate-900 uppercase tracking-widest text-[11px] border-b border-slate-100 pb-2 mb-3 flex items-center gap-2">
-                    <i data-lucide="stethoscope" class="w-4 h-4 text-brand-600"></i> Systemic Physical Exam
-                  </h4>
-                  <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-200 text-slate-800 whitespace-pre-wrap leading-relaxed">
-                    ${pt.exam || 'No focal physical examination abnormalities recorded.'}
-                  </div>
-                  <div class="mt-5 pt-4 border-t border-slate-100 text-center">
-                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-3">Anatomical Symptom Mapping</span>
-                    <div id="body-map-container" style="page-break-inside: avoid; break-inside: avoid; display: block; margin: 0 auto; height: 180px; width: 110px;">
-                      ${pinsHtml}
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                ${(pt.analysis?.differential || []).map(d => `
+                  <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-xs">
+                    <div class="flex justify-between font-bold text-slate-800">
+                      <span>${d.condition}</span>
+                      <span class="text-sky-700">${d.probability}%</span>
                     </div>
+                    <span class="text-[10px] font-mono text-slate-500 block mt-0.5">Code: ${d.icd || 'ICD-10-CM'}</span>
                   </div>
-                </div>
+                `).join('')}
+              </div>
+
+              <div class="mt-3 pt-3 border-t border-slate-200">
+                <span class="text-[10px] text-slate-400 uppercase font-bold block mb-1">Recommended Diagnostic Workup</span>
+                <ul class="list-disc list-inside text-xs text-slate-700 space-y-0.5">
+                  ${(pt.analysis?.recommendedOrders || []).map(o => `<li>${o}</li>`).join('')}
+                </ul>
               </div>
             </div>
 
             <!-- Prescription Grid -->
-            <div class="print-box rounded-2xl p-6 mb-8 bg-white border-2 border-slate-800 shadow-sm">
-              <div class="flex items-center justify-between border-b-2 border-slate-800 pb-4 mb-5">
-                <div class="flex items-center gap-4">
-                  <span class="text-5xl font-serif font-black text-slate-900 leading-none">℞</span>
+            <div class="print-box rounded-xl p-5 mb-6 bg-white border border-slate-400 shadow-sm">
+              <div class="flex items-center justify-between border-b-2 border-slate-800 pb-3 mb-4">
+                <div class="flex items-center gap-3">
+                  <span class="text-4xl font-serif font-black text-slate-900 leading-none">℞</span>
                   <div>
-                    <h3 class="text-base font-black uppercase tracking-widest text-slate-900">Physician Medication Order</h3>
+                    <h3 class="text-sm font-bold uppercase tracking-widest text-slate-900">Physician Medication Order</h3>
+                    <p class="text-[10px] text-slate-500">Generic substitution permitted unless specifically indicated otherwise</p>
                   </div>
                 </div>
-                <div class="text-right text-sm">
-                  <strong class="font-mono text-slate-900">${new Date(pt.timestamp).toLocaleDateString()}</strong>
+                <div class="text-right text-xs">
+                  <span class="text-[10px] text-slate-400 uppercase block">Prescription Date</span>
+                  <strong class="font-mono text-slate-800">${new Date(pt.timestamp).toLocaleDateString()}</strong>
                 </div>
               </div>
 
               <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm whitespace-nowrap mb-5">
-                  <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 font-bold text-[10px] uppercase tracking-wider">
+                <table class="w-full text-left text-xs whitespace-nowrap mb-4">
+                  <thead class="bg-slate-100 text-slate-600 border-b border-slate-300 font-semibold text-[10px] uppercase">
                     <tr>
-                      <th class="py-3 px-4">#</th>
-                      <th class="py-3 px-4">Generic & Formulation</th>
-                      <th class="py-3 px-4">Route</th>
-                      <th class="py-3 px-4">Frequency</th>
-                      <th class="py-3 px-4">Duration</th>
-                      <th class="py-3 px-4">Instructions</th>
+                      <th class="py-2 px-3 border-r border-slate-200">#</th>
+                      <th class="py-2 px-3 border-r border-slate-200">Generic & Formulation</th>
+                      <th class="py-2 px-3 border-r border-slate-200">Route</th>
+                      <th class="py-2 px-3 border-r border-slate-200">Frequency / Sig</th>
+                      <th class="py-2 px-3 border-r border-slate-200">Duration</th>
+                      <th class="py-2 px-3">Instructions / Dietary Relation</th>
                     </tr>
                   </thead>
-                  <tbody>${rxRows}</tbody>
+                  <tbody>
+                    ${rxRows}
+                  </tbody>
                 </table>
               </div>
 
-              <div class="mt-5 pt-4 border-t border-slate-200">
-                <label class="text-[11px] font-bold uppercase tracking-widest text-slate-500 block mb-2">Additional Clinical Orders & Instructions</label>
-                <textarea id="case-prescription-pad" rows="3" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl p-4 text-slate-900 font-mono text-sm focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 transition-all resize-none" oninput="window.updatePrescriptionInFirestore('${pt.id}', this.value)">${pt.prescription || ''}</textarea>
+              <div class="mt-4 pt-3 border-t border-slate-200">
+                <label class="text-[10px] font-bold uppercase text-slate-500 block mb-1">Additional Clinical Orders & Instructions</label>
+                <textarea id="case-prescription-pad" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded p-3 text-slate-800 font-mono text-xs focus:outline-none focus:border-sky-500 transition resize-none" oninput="window.updatePrescriptionInFirestore('${pt.id}', this.value)">${pt.prescription || ''}</textarea>
               </div>
             </div>
-            
-            <div class="border-t-2 border-slate-900 pt-8 mt-8 text-sm" style="margin-bottom: 40px;">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+
+            <!-- Follow-up Instructions -->
+            <div class="print-box rounded-xl p-4 mb-6 bg-slate-50 border border-slate-200 text-xs">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <span class="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-1">Digital Audit Trail</span>
-                  <p class="font-mono text-xs text-slate-600">SHA-256: 7f8a9e22b...3c11d0</p>
-                  <p class="text-xs text-emerald-600 font-bold mt-1 flex items-center gap-1.5"><i data-lucide="shield-check" class="w-4 h-4"></i> Verified Cloud EHR Record</p>
+                  <h4 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] mb-1 flex items-center gap-1.5 text-rose-700">
+                    <i data-lucide="alert-octagon" class="w-3.5 h-3.5"></i> When to Return to ER Immediately
+                  </h4>
+                  <ul class="list-disc list-inside text-slate-600 space-y-0.5">
+                    <li>Recurrence of acute retrosternal chest tightness or radiating pain</li>
+                    <li>Sudden shortness of breath, dizziness, or syncopal episode</li>
+                    <li>Hypotension with cold diaphoresis or persistent vomiting</li>
+                  </ul>
                 </div>
+                <div>
+                  <h4 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] mb-1 flex items-center gap-1.5 text-sky-800">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Review & Follow-up Consultation
+                  </h4>
+                  <p class="text-slate-600">Review in Cardiology OPD within <strong>48 to 72 hours</strong> with repeat 12-lead ECG.</p>
+                  <p class="text-slate-500 mt-1 font-semibold">Dietary Order: Low sodium (&lt;2g/day), diabetic-friendly cardiac diet.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Digital Authentication Signature -->
+            <div class="border-t-2 border-slate-900 pt-6 mt-6 text-xs" style="margin-bottom: 80px;">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                <div>
+                  <span class="text-[9px] uppercase font-bold text-slate-400 block mb-1">Digital Audit Trail</span>
+                  <p class="font-mono text-[10px] text-slate-600">SHA-256: 7f8a9e22b...3c11d0</p>
+                  <p class="text-[10px] text-emerald-700 font-semibold mt-0.5 flex items-center gap-1">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Verified Cloud EHR Record
+                  </p>
+                  <p class="text-[9px] text-slate-400 mt-1">Generated: ${new Date().toLocaleString()}</p>
+                </div>
+
+                <div class="text-center"></div>
+
                 <div class="text-right">
-                  <div class="border-b-2 border-slate-900 w-56 ml-auto mb-3"></div>
-                  <strong class="text-slate-900 text-base block tracking-tight">${userProfile?.name || pt.attendingPhysician || 'Dr. Vikram Sharma, MD'}</strong>
-                  <span class="text-xs text-slate-600 font-medium block mt-0.5">Director - Interventional Cardiology</span>
+                  <div class="border-b-2 border-slate-900 w-48 ml-auto mb-2"></div>
+                  <strong class="text-slate-900 text-sm block">${userProfile?.name || pt.attendingPhysician || 'Dr. Vikram Sharma, MD'}</strong>
+                  <span class="text-[11px] text-slate-600 block">Director - Interventional Cardiology</span>
+                  <span class="font-mono text-[10px] text-slate-500 block">Delhi Medical Council Reg: 45982</span>
+                  <span class="text-[9px] text-slate-400 italic block mt-1">Authorized Electronic Sign-off</span>
                 </div>
               </div>
             </div>
@@ -1554,97 +1966,128 @@
     window.updatePrescriptionInFirestore = async function(id, val) {
       if (!currentUser) return;
       try {
-        await updateDoc(doc(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'patients', id), { prescription: val, updatedAt: serverTimestamp() });
+        const docRef = doc(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'patients', id);
+        await updateDoc(docRef, { prescription: val, updatedAt: serverTimestamp() });
         showCloudSyncToast("Prescription updated in Firestore");
-      } catch (err) { console.error("Failed to update prescription:", err); }
+      } catch (err) {
+        console.error("Failed to update prescription:", err);
+      }
     };
 
     window.copyFullSoapNote = function(patientId) {
       const pt = livePatients.find(p => p.id === patientId);
       if (!pt) return;
-      navigator.clipboard.writeText(pt.analysis?.soapNote || '').then(() => alert("Full clinical SOAP Note copied to clipboard!"));
+      navigator.clipboard.writeText(pt.analysis?.soapNote || '').then(() => {
+        alert("Full clinical SOAP Note copied to clipboard!");
+      });
     };
 
+    // ============================================================================
+    // MODAL QUICK VIEW (WITH VITAL TRENDS CHARTING)
+    // ============================================================================
     window.openModal = function(patientId) {
       const patient = livePatients.find(p => p.id === patientId);
       if (!patient) return;
 
-      document.getElementById('modal-patient-name').innerText = `${patient.name}`;
+      document.getElementById('modal-patient-name').innerText = `${patient.name} (${patient.gender}, ${patient.age}y)`;
       document.getElementById('modal-patient-meta').innerText = `UHID: ${patient.uhid || patient.id} • Registered: ${new Date(patient.timestamp).toLocaleTimeString()}`;
       
       const fullBtn = document.getElementById('modal-view-full-btn');
-      fullBtn.onclick = () => { window.closeModal(); window.appRouter('case-record', { id: patient.id }); };
+      fullBtn.onclick = () => {
+        window.closeModal();
+        window.appRouter('case-record', { id: patient.id });
+      };
 
-      document.getElementById('modal-body').innerHTML = `
-        <div class="flex flex-wrap items-center justify-between p-5 bg-white border border-slate-200/60 rounded-2xl gap-4 shadow-sm">
-          <div class="flex items-center gap-4">
-            <span class="px-3.5 py-1.5 rounded-lg text-xs font-bold ${patient.analysis?.esiLevel === 1 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-brand-50 text-brand-700 border border-brand-200'}">
+      const modalBody = document.getElementById('modal-body');
+      modalBody.innerHTML = `
+        <div class="flex flex-wrap items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl gap-4">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded text-xs font-bold ${
+              patient.analysis?.esiLevel === 1 ? 'bg-rose-100 text-rose-700 border border-rose-200' :
+              patient.analysis?.esiLevel === 2 ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+              'bg-sky-100 text-sky-700 border border-sky-200'
+            }">
               ESI ${patient.analysis?.esiLevel || 3} • ${patient.analysis?.urgency || 'Urgent'}
             </span>
-            <span class="text-xs text-slate-500 font-medium">MEWS Score: <strong class="text-slate-900 font-black">${patient.analysis?.mewsScore || 0}</strong></span>
+            <span class="text-xs text-slate-500">MEWS Score: <strong class="text-slate-900">${patient.analysis?.mewsScore || 0}</strong></span>
           </div>
-          <div class="flex items-center gap-5 text-sm font-mono bg-slate-50/50 px-4 py-2 rounded-xl border border-slate-100">
+          <div class="flex items-center gap-4 text-xs font-mono">
             <span>HR: <strong class="text-slate-900">${patient.vitals?.hr}</strong></span>
             <span>BP: <strong class="text-slate-900">${patient.vitals?.sbp}/${patient.vitals?.dbp}</strong></span>
             <span>SpO2: <strong class="text-slate-900">${patient.vitals?.spo2}%</strong></span>
+            <span>RR: <strong class="text-slate-900">${patient.vitals?.rr}</strong></span>
+            <span>Temp: <strong class="text-slate-900">${patient.vitals?.temp}°F</strong></span>
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="space-y-6">
+          <div class="space-y-4">
             <div>
-              <h5 class="text-slate-500 font-bold uppercase tracking-widest text-[11px] mb-2">Chief Complaint</h5>
-              <p class="text-slate-900 bg-white p-4 rounded-xl border border-slate-200/60 shadow-sm font-medium">${patient.chiefComplaint}</p>
+              <h5 class="text-slate-500 font-semibold uppercase tracking-wide text-[11px] mb-1">Chief Complaint</h5>
+              <p class="text-slate-900 bg-slate-50 p-3 rounded-lg border border-slate-200">${patient.chiefComplaint}</p>
             </div>
             
-            <div class="bg-white border border-slate-200/60 rounded-xl p-5 shadow-sm">
-              <h5 class="font-bold text-[11px] uppercase tracking-widest text-slate-500 mb-4 flex items-center justify-between">
-                Vital Trends (Last 4 Hrs) <i data-lucide="trending-up" class="w-4 h-4 text-slate-400"></i>
+            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+              <h5 class="font-semibold text-[10px] uppercase text-slate-500 mb-2 flex items-center justify-between">
+                Vital Trends (Last 4 Hrs) <i data-lucide="trending-up" class="w-3.5 h-3.5 text-slate-400"></i>
               </h5>
-              <div class="relative h-32 w-full"><canvas id="vitalsChart"></canvas></div>
+              <div class="relative h-24 w-full">
+                <canvas id="vitalsChart"></canvas>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
+                <span class="text-slate-500 block">Allergies</span>
+                <span class="text-rose-600 font-medium">${patient.allergies}</span>
+              </div>
+              <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
+                <span class="text-slate-500 block">Blood Group</span>
+                <span class="text-slate-900 font-bold">${patient.bloodGroup || 'Unknown'}</span>
+              </div>
             </div>
           </div>
 
-          <div class="space-y-6">
-            <div class="bg-white border border-slate-200/60 rounded-xl p-5 shadow-sm">
-              <h5 class="text-brand-600 font-bold uppercase tracking-widest text-[11px] mb-4">Differential Diagnoses</h5>
-              <div class="space-y-4">
+          <div class="space-y-4">
+            <div>
+              <h5 class="text-sky-600 font-semibold uppercase tracking-wide text-[11px] mb-1">Likely Differential Diagnoses (ICD-10)</h5>
+              <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2.5">
                 ${(patient.analysis?.differential || []).map(d => `
                   <div>
-                    <div class="flex justify-between text-sm mb-1.5">
-                      <span class="text-slate-800 font-semibold">${d.condition} <span class="text-[10px] font-mono text-slate-400">(${d.icd || 'ICD-10'})</span></span>
-                      <span class="text-brand-600 font-mono font-bold">${d.probability}%</span>
+                    <div class="flex justify-between text-xs mb-1">
+                      <span class="text-slate-700 font-medium">${d.condition} <span class="text-[10px] font-mono text-slate-400">(${d.icd || 'ICD-10'})</span></span>
+                      <span class="text-sky-600 font-mono font-bold">${d.probability}%</span>
                     </div>
-                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                      <div class="bg-brand-500 h-2 rounded-full" style="width: ${d.probability}%"></div>
+                    <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                      <div class="bg-sky-500 h-1.5 rounded-full" style="width: ${d.probability}%"></div>
                     </div>
                   </div>
                 `).join('')}
               </div>
             </div>
 
-            ${patient.analysis?.redFlags?.length > 0 ? `
             <div>
-              <h5 class="text-rose-600 font-bold uppercase tracking-widest text-[11px] mb-2">Active Red Flags</h5>
-              <div class="space-y-2">
-                ${patient.analysis.redFlags.map(rf => `
-                  <div class="px-4 py-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm font-semibold flex items-center gap-3 shadow-sm">
-                    <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-500"></i> ${rf}
+              <h5 class="text-rose-600 font-semibold uppercase tracking-wide text-[11px] mb-1">Active Red Flags</h5>
+              <div class="space-y-1">
+                ${(patient.analysis?.redFlags || []).map(rf => `
+                  <div class="px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-700 rounded text-xs flex items-center gap-2">
+                    <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-rose-600"></i>
+                    ${rf}
                   </div>
                 `).join('')}
               </div>
-            </div>` : ''}
+            </div>
           </div>
         </div>
 
         <div>
-          <h5 class="text-slate-500 font-bold uppercase tracking-widest text-[11px] mb-2 flex items-center justify-between">
+          <h5 class="text-slate-500 font-semibold uppercase tracking-wide text-[11px] mb-1 flex items-center justify-between">
             <span>Automated SBAR / SOAP Note</span>
-            <button onclick="window.copyFullSoapNote('${patient.id}')" class="text-brand-600 hover:underline flex items-center gap-1.5 font-semibold">
-              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Note
+            <button onclick="window.copyFullSoapNote('${patient.id}')" class="text-sky-600 hover:underline flex items-center gap-1">
+              <i data-lucide="copy" class="w-3 h-3"></i> Copy Note
             </button>
           </h5>
-          <pre class="bg-slate-900 border border-slate-700 p-5 rounded-2xl text-slate-300 text-xs font-mono leading-relaxed whitespace-pre-wrap overflow-x-auto shadow-inner">${patient.analysis?.soapNote || 'No SOAP note available.'}</pre>
+          <pre class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-slate-700 text-xs font-mono leading-relaxed whitespace-pre-wrap overflow-x-auto">${patient.analysis?.soapNote || 'No SOAP note available.'}</pre>
         </div>
       `;
 
@@ -1654,20 +2097,37 @@
       setTimeout(() => {
         const canvas = document.getElementById('vitalsChart');
         if (canvas) {
+          const ctx = canvas.getContext('2d');
           const hr = patient.vitals?.hr || 75;
-          new Chart(canvas.getContext('2d'), {
+          new Chart(ctx, {
             type: 'line',
             data: {
               labels: ['-3h', '-2h', '-1h', 'Current'],
               datasets: [{
                 label: 'Heart Rate',
-                data: [hr > 100 ? hr - 15 : hr + 5, hr > 100 ? hr - 5 : hr - 2, hr > 100 ? hr - 8 : hr + 3, hr],
-                borderColor: '#0284c7', backgroundColor: 'rgba(2, 132, 199, 0.1)', borderWidth: 3, tension: 0.4, fill: true, pointBackgroundColor: '#0284c7', pointRadius: 4
+                data: [
+                  hr > 100 ? hr - 15 : hr + 5, 
+                  hr > 100 ? hr - 5 : hr - 2, 
+                  hr > 100 ? hr - 8 : hr + 3, 
+                  hr
+                ],
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#ef4444',
+                pointRadius: 3
               }]
             },
             options: {
-              responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-              scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' } } }
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false }, tooltip: { enabled: true } },
+              scales: { 
+                x: { grid: { display: false }, ticks: { font: { size: 9 } } }, 
+                y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 9 } } } 
+              }
             }
           });
         }
@@ -1678,7 +2138,10 @@
       document.getElementById('patient-modal').classList.add('hidden');
     };
 
-    window.addEventListener('DOMContentLoaded', () => window.appRouter('dashboard'));
+    // Initial boot
+    window.addEventListener('DOMContentLoaded', () => {
+      window.appRouter('dashboard');
+    });
   </script>
 </body>
 </html>
