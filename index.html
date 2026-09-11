@@ -261,6 +261,50 @@
     </div>
   </div>
 
+  <!-- Edit Patient Details Modal -->
+  <div id="edit-patient-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+      <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+          <i data-lucide="edit" class="w-4 h-4 text-sky-600"></i> Update Patient Details
+        </h3>
+        <button onclick="window.closeEditModal()" class="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      
+      <form id="edit-patient-form" onsubmit="window.handleEditSubmit(event)" class="p-6 space-y-4">
+        <input type="hidden" id="edit-pt-id">
+        
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Patient Name</label>
+          <input type="text" id="edit-pt-name" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
+        </div>
+        
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Chief Complaint / Status</label>
+          <input type="text" id="edit-pt-complaint" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Assigned Bed</label>
+            <input type="text" id="edit-pt-bed" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Heart Rate (bpm)</label>
+            <input type="number" id="edit-pt-hr" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-sky-500">
+          </div>
+        </div>
+
+        <div class="pt-4 flex justify-end gap-3 border-t border-slate-100">
+          <button type="button" onclick="window.closeEditModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition">Cancel</button>
+          <button type="submit" id="btn-save-edit" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-medium transition shadow-sm">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Real-Time Sync Status Toast -->
   <div id="cloud-status-toast" class="fixed bottom-5 right-5 z-40 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-xs opacity-0 pointer-events-none transform translate-y-2">
     <i data-lucide="cloud-check" class="w-4 h-4 text-emerald-400"></i>
@@ -610,6 +654,60 @@
     };
 
     // ============================================================================
+    // EDIT MODAL LOGIC (CRUD - Update)
+    // ============================================================================
+    window.openEditModal = function(id) {
+      const pt = livePatients.find(p => p.id === id);
+      if (!pt) return;
+
+      // Populate existing data
+      document.getElementById('edit-pt-id').value = pt.id;
+      document.getElementById('edit-pt-name').value = pt.name || '';
+      document.getElementById('edit-pt-complaint').value = pt.chiefComplaint || '';
+      document.getElementById('edit-pt-bed').value = pt.bedAssigned || '';
+      document.getElementById('edit-pt-hr').value = pt.vitals?.hr || '';
+
+      document.getElementById('edit-patient-modal').classList.remove('hidden');
+      lucide.createIcons();
+    };
+
+    window.closeEditModal = function() {
+      document.getElementById('edit-patient-modal').classList.add('hidden');
+    };
+
+    window.handleEditSubmit = async function(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const btn = document.getElementById('btn-save-edit');
+      btn.disabled = true;
+      btn.textContent = "Saving...";
+
+      const id = document.getElementById('edit-pt-id').value;
+      const patientRef = doc(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'patients', id);
+
+      try {
+        await updateDoc(patientRef, {
+          name: document.getElementById('edit-pt-name').value,
+          chiefComplaint: document.getElementById('edit-pt-complaint').value,
+          bedAssigned: document.getElementById('edit-pt-bed').value,
+          "vitals.hr": parseInt(document.getElementById('edit-pt-hr').value) || 0,
+          updatedAt: serverTimestamp()
+        });
+
+        showCloudSyncToast("Patient details successfully updated");
+        window.closeEditModal();
+      } catch (error) {
+        console.error("Update failed:", error);
+        alert("Failed to update patient: " + error.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Save Changes";
+      }
+    };
+
+
+    // ============================================================================
     // APPLICATION ROUTER
     // ============================================================================
     window.appRouter = function(view, params = {}) {
@@ -880,6 +978,9 @@
               </button>
               <button onclick="window.appRouter('case-record', {id: '${pt.id}'})" class="px-3 py-1.5 text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-lg transition border border-sky-200 font-medium">
                 Official Chart
+              </button>
+              <button onclick="window.openEditModal('${pt.id}')" class="px-3 py-1.5 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition border border-emerald-200 font-medium">
+                Edit
               </button>
             </div>
           </div>
@@ -1608,6 +1709,7 @@
           <td class="py-3 px-4 text-right space-x-2">
             <button onclick="window.openModal('${p.id}')" class="px-2.5 py-1 text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded transition border border-slate-200">Quick EMR</button>
             <button onclick="window.appRouter('case-record', {id: '${p.id}'})" class="px-2.5 py-1 text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 rounded transition border border-sky-200 font-medium">Official Chart</button>
+            <button onclick="window.openEditModal('${p.id}')" class="px-2.5 py-1 text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 rounded transition border border-emerald-200 font-medium">Edit</button>
             <button onclick="window.deletePatientRecord('${p.id}')" class="px-2 py-1 text-rose-600 hover:text-rose-700 hover:bg-rose-100 rounded transition">
               <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i>
             </button>
