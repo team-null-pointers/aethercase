@@ -227,13 +227,7 @@
         <h2 id="view-title" class="text-lg font-semibold text-slate-900">Clinical Triage & Operational Monitoring</h2>
       </div>
       <div class="flex items-center gap-3">
-        <span id="cloud-sync-tag" class="px-2.5 py-1 text-[11px] rounded-full font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 shadow-sm">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          Firestore Live
-        </span>
-        <button onclick="window.seedDemoDataToFirestore()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-900 border border-slate-300 rounded-lg hover:bg-slate-100 transition shadow-sm">
-          Reset Demo Data
-        </button>
+        <!-- Live Badges & Reset Functionality Removed -->
       </div>
     </header>
 
@@ -358,163 +352,6 @@
     let currentView = 'dashboard';
     let currentRouteParams = {};
 
-    // Initial clinical fallback dataset
-    const initialDataset = [
-      {
-        id: "PT-9042",
-        uhid: "MED-DEL-2026-8819",
-        abhaId: "91-4582-1920-3341",
-        caseId: "CS-5011",
-        name: "Sunita Devi",
-        age: 64,
-        gender: "Female",
-        bloodGroup: "A+",
-        phone: "+91 98765 43210",
-        height: 158,
-        weight: 68,
-        attendingPhysician: "Dr. Vikram Sharma, MD (Cardiology & Trauma)",
-        department: "Emergency Medicine & Interventional Cardiology",
-        bedAssigned: "ER Resus Bay 02",
-        chiefComplaint: "Crushing retrosternal chest pain with radiation to left arm and diaphoresis.",
-        onset: "2 hours ago while resting",
-        duration: "1",
-        aggravating: "Minimal physical exertion",
-        ameliorating: "Sublingual nitroglycerin (minimal relief)",
-        allergies: "Penicillin (Anaphylaxis), Aspirin (Bronchospasm)",
-        medications: "Atorvastatin 40mg, Metoprolol 50mg, Lisinopril 10mg",
-        pmhx: "CAD s/p Stent to LAD (2018), Type 2 Diabetes, Hypertension",
-        fhx: "Father deceased from premature MI at age 52",
-        ros: "Positive for crushing chest pressure, dyspnea, nausea, diaphoresis. Denies syncope or hemoptysis.",
-        exam: "Ill-appearing, cool diaphoretic extremities, tachypneic. S1/S2 present, regular rhythm, no cardiac gallop or friction rub. Bilateral vesicular breath sounds without crackles.",
-        painMarkers: [{ x: "0.485", y: "0.225" }],
-        vitals: { hr: 112, sbp: 88, dbp: 54, rr: 24, spo2: 91, temp: 37.1 },
-        timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
-        structuredRx: [
-          { drug: "Clopidogrel", form: "Tab", dose: "300 mg", route: "Oral", sig: "STAT", duration: "Single Dose", instructions: "Immediate intake with water" },
-          { drug: "Ticagrelor", form: "Tab", dose: "90 mg", route: "Oral", sig: "1-0-1", duration: "30 Days", instructions: "Twice daily after food" },
-          { drug: "Atorvastatin", form: "Tab", dose: "80 mg", route: "Oral", sig: "0-0-1", duration: "90 Days", instructions: "Nightly after dinner" },
-          { drug: "IV Normal Saline 0.9%", form: "Infusion", dose: "500 mL", route: "IV", sig: "STAT", duration: "Over 30 mins", instructions: "Titrate to maintain SBP > 90 mmHg" },
-          { drug: "Nitroglycerin Infusion", form: "Inj", dose: "5 mcg/min", route: "IV", sig: "PRN", duration: "Titrate", instructions: "HOLD if SBP < 90 mmHg or HR < 50" }
-        ],
-        prescription: "Tab Clopidogrel 300mg PO STAT\nTab Atorvastatin 80mg HS\nIV Normal Saline 500mL bolus STAT\nNitroglycerin IV infusion titrate PRN chest pain (Hold for SBP < 90)",
-        analysis: {
-          esiLevel: 1,
-          mewsScore: 5,
-          urgency: "Immediate / Resuscitation",
-          primaryIcd10: "I21.0 - ST Elevation (STEMI) Myocardial Infarction of Anterior Wall",
-          differential: [
-            { condition: "ST-Elevation Myocardial Infarction (STEMI)", probability: 88, icd: "I21.0" },
-            { condition: "Acute Aortic Dissection", probability: 8, icd: "I71.01" },
-            { condition: "Massive Pulmonary Embolism", probability: 4, icd: "I26.9" }
-          ],
-          redFlags: ["Hypotension (SBP < 90 mmHg)", "Unresolved Angina", "Tachycardia (HR > 100 bpm)", "Hypoxemia (SpO2 91% on room air)", "Shock Index > 1.2 (Cardiogenic Risk)"],
-          recommendedOrders: ["STAT 12-Lead ECG within 10 mins", "High-Sensitivity Troponin I (Baseline & 2-Hour)", "Bedside Echocardiogram", "Activate Cardiac Cath Lab Team", "Dual Large-Bore IV Lines (18G)"],
-          soapNote: "S: 64yo female with CAD presents with sudden severe retrosternal chest pressure radiating to left arm with diaphoresis x 2 hours.\nO: Diaphoretic, hypotensive (88/54 mmHg), HR 112 bpm, SpO2 91% on RA. MAP 65 mmHg, Shock Index 1.27. MEWS 5.\nA: Acute Coronary Syndrome / STEMI complicated by cardiogenic pre-shock.\nP: Immediate cath lab activation, antiplatelet loading, serial troponins, continuous hemodynamic monitoring."
-        }
-      },
-      {
-        id: "PT-9043",
-        uhid: "MED-DEL-2026-8820",
-        abhaId: "91-8822-4411-9002",
-        caseId: "CS-5012",
-        name: "Rahul Verma",
-        age: 27,
-        gender: "Male",
-        bloodGroup: "O-",
-        phone: "+91 99887 76655",
-        height: 175,
-        weight: 72,
-        attendingPhysician: "Dr. Vikram Sharma, MD (Cardiology & Trauma)",
-        department: "Emergency Medicine & Critical Care",
-        bedAssigned: "ER Acute Bay 01",
-        chiefComplaint: "Acute wheezing, shortness of breath, audible stridor post peanut ingestion.",
-        onset: "25 minutes ago following pastry ingestion",
-        duration: "1",
-        aggravating: "Supine positioning",
-        ameliorating: "None",
-        allergies: "Peanuts, Tree Nuts",
-        medications: "Albuterol MDI PRN",
-        pmhx: "Atopic Asthma",
-        fhx: "Non-contributory",
-        ros: "Respiratory distress, extensive hives, globus sensation in hypopharynx. Denies fever.",
-        exam: "Audible inspiratory stridor, diffuse expiratory wheezing bilaterally. Generalized urticarial plaques across chest and neck.",
-        painMarkers: [{ x: "0.500", y: "0.155" }],
-        vitals: { hr: 125, sbp: 105, dbp: 68, rr: 28, spo2: 93, temp: 36.8 },
-        timestamp: new Date(Date.now() - 20 * 60000).toISOString(),
-        structuredRx: [
-          { drug: "Epinephrine (1:1000)", form: "Inj", dose: "0.3 mg", route: "IM", sig: "STAT", duration: "Single Dose", instructions: "Inject anterolateral mid-thigh immediately" },
-          { drug: "Hydrocortisone", form: "Inj", dose: "200 mg", route: "IV", sig: "STAT", duration: "Single Dose", instructions: "Slow IV push" },
-          { drug: "Diphenhydramine", form: "Inj", dose: "50 mg", route: "IV", sig: "STAT", duration: "Single Dose", instructions: "Slow IV push over 2 mins" },
-          { drug: "Nebulized Salbutamol + Ipratropium", form: "Respule", dose: "2.5mg/0.5mg", route: "Inhalation", sig: "STAT", duration: "Repeat q20m x 3", instructions: "Via 8L/min O2 facemask" }
-        ],
-        prescription: "Epinephrine 0.3mg IM (1:1000) STAT\nDiphenhydramine 50mg IV STAT\nHydrocortisone 200mg IV STAT\nNebulized Salbutamol with Ipratropium",
-        analysis: {
-          esiLevel: 1,
-          mewsScore: 4,
-          urgency: "Immediate / Resuscitation",
-          primaryIcd10: "T78.01XA - Anaphylactic Reaction due to Peanuts, Initial Encounter",
-          differential: [
-            { condition: "Severe Anaphylaxis with Airway Compromise", probability: 94, icd: "T78.01XA" },
-            { condition: "Acute Severe Status Asthmaticus", probability: 6, icd: "J45.901" }
-          ],
-          redFlags: ["Laryngeal Edema / Inspiratory Stridor", "Tachypnea (RR 28/min)", "Tachycardia (HR 125 bpm)", "Impending Respiratory Arrest"],
-          recommendedOrders: ["Intramuscular Epinephrine STAT (1:1000)", "Continuous Pulse Oximetry & Airway Cart Bedside", "High-Flow Oxygen via Non-Rebreather 15L", "Nebulized Beta-Agonists"],
-          soapNote: "S: 27yo male presents with acute anaphylaxis and throat constriction after pastry ingestion.\nO: Audible stridor, diffuse wheezing, extensive urticaria. BP 105/68, HR 125, SpO2 93%.\nA: Severe anaphylactic shock with acute upper airway compromise.\nP: 0.3mg IM Epi STAT, IV H1/H2 blockers, IV corticosteroids, prepare video laryngoscope."
-        }
-      },
-      {
-        id: "PT-9044",
-        uhid: "MED-DEL-2026-8821",
-        abhaId: "91-9120-7788-5522",
-        caseId: "CS-5013",
-        name: "Priya Sharma",
-        age: 42,
-        gender: "Female",
-        bloodGroup: "B+",
-        phone: "+91 91234 56789",
-        height: 160,
-        weight: 58,
-        attendingPhysician: "Dr. Vikram Sharma, MD (Cardiology & Trauma)",
-        department: "Emergency Medicine & General Surgery",
-        bedAssigned: "ER Observation Bay 04",
-        chiefComplaint: "Right lower quadrant abdominal pain for 18 hours with low fever and anorexia.",
-        onset: "Migrated from periumbilical region 18h ago",
-        duration: "1",
-        aggravating: "Ambulation, coughing, vehicle bumps",
-        ameliorating: "Fetal position, right hip flexion",
-        allergies: "NKDA (No Known Drug Allergies)",
-        medications: "Oral Contraceptive Pill",
-        pmhx: "None",
-        fhx: "No familial GI malignancy",
-        ros: "Positive for fever, anorexia, nausea, one episode of bilious emesis. Denies hematochezia, dysuria, vaginal discharge.",
-        exam: "Abdomen soft with localized involuntary guarding and exquisite tenderness at McBurney's point. Positive Rovsing sign, positive psoas sign.",
-        painMarkers: [{ x: "0.560", y: "0.380" }],
-        vitals: { hr: 92, sbp: 128, dbp: 82, rr: 18, spo2: 99, temp: 38.6 },
-        timestamp: new Date(Date.now() - 110 * 60000).toISOString(),
-        structuredRx: [
-          { drug: "Ceftriaxone", form: "Inj", dose: "1 g", route: "IV", sig: "1-0-1", duration: "5 Days", instructions: "Administer after test dose" },
-          { drug: "Metronidazole", form: "Infusion", dose: "500 mg", route: "IV", sig: "1-1-1", duration: "5 Days", instructions: "Infuse over 30 mins" },
-          { drug: "Paracetamol", form: "Infusion", dose: "1000 mg", route: "IV", sig: "TID PRN", duration: "3 Days", instructions: "For temp > 38.5°C or severe pain" },
-          { drug: "Ondansetron", form: "Inj", dose: "4 mg", route: "IV", sig: "BD PRN", duration: "2 Days", instructions: "Slow IV push for nausea" }
-        ],
-        prescription: "Inj Ceftriaxone 1g IV BD\nInj Metronidazole 500mg IV TID\nInj Paracetamol 1g IV PRN fever\nInj Ondansetron 4mg IV PRN nausea",
-        analysis: {
-          esiLevel: 3,
-          mewsScore: 1,
-          urgency: "Urgent",
-          primaryIcd10: "K35.80 - Acute Appendicitis, Unspecified",
-          differential: [
-            { condition: "Acute Appendicitis", probability: 82, icd: "K35.80" },
-            { condition: "Ovarian Cyst Rupture / Adnexal Torsion", probability: 11, icd: "N83.20" },
-            { condition: "Acute Mesenteric Adenitis", probability: 7, icd: "I88.0" }
-          ],
-          redFlags: ["Peritoneal Irritation Signs (McBurney Point & Rovsing Sign)", "Pyrexia (38.6°C)"],
-          recommendedOrders: ["Emergent CECT Abdomen & Pelvis", "Complete Blood Count with differential (Leukocytosis check)", "Serum beta-hCG (STAT qualitative)", "NPO Protocol & Urgent Surgical Consult"],
-          soapNote: "S: 42yo female with 18h history of migratory RLQ pain, low-grade pyrexia, anorexia, nausea.\nO: Temp 38.6°C. Tenderness and rebound at McBurney point. Rovsing (+).\nA: Acute Appendicitis (Alvarado score 8).\nP: Strict NPO, IV fluid resuscitation, broad-spectrum IV antibiotics, surgical consult for laparoscopic appendectomy."
-        }
-      }
-    ];
-
     function showCloudSyncToast(msg = "Synchronized with Cloud Firestore") {
       const toast = document.getElementById('cloud-status-toast');
       const text = document.getElementById('cloud-status-text');
@@ -610,13 +447,6 @@
       const patientsCol = collection(db, 'artifacts', APP_ID, 'users', uid, 'patients');
       
       unsubscribePatientsSnapshot = onSnapshot(patientsCol, async (snapshot) => {
-        if (snapshot.empty) {
-          // If Firestore is empty for this user, automatically seed with rich initial case records
-          console.log("No existing clinical encounters found in Firestore. Seeding default EHR dataset...");
-          await seedDemoDataToFirestore();
-          return;
-        }
-
         const items = [];
         snapshot.forEach((docSnap) => {
           items.push({ id: docSnap.id, ...docSnap.data() });
@@ -633,25 +463,6 @@
         console.error("Firestore live synchronization error:", error);
       });
     }
-
-    // Seed/Reset Initial Data in Firestore
-    window.seedDemoDataToFirestore = async function() {
-      if (!currentUser) return;
-      const batch = writeBatch(db);
-      const patientsCol = collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'patients');
-
-      initialDataset.forEach(pt => {
-        const docRef = doc(patientsCol, pt.id);
-        batch.set(docRef, {
-          ...pt,
-          attendingPhysician: userProfile?.name || pt.attendingPhysician,
-          updatedAt: serverTimestamp()
-        });
-      });
-
-      await batch.commit();
-      showCloudSyncToast("Demo clinical records reloaded in Firestore");
-    };
 
     // ============================================================================
     // EDIT MODAL LOGIC (CRUD - Update)
@@ -763,8 +574,8 @@
       else if (v.rr >= 21 && v.rr <= 29) score += 2;
       else if (v.rr >= 30) score += 3;
 
-      if (v.temp < 35.0) score += 2;
-      else if (v.temp >= 38.5) score += 2;
+      if (v.temp < 95.0) score += 2;
+      else if (v.temp >= 101.3) score += 2;
 
       return score;
     }
@@ -791,12 +602,12 @@
       if (vitals.hr > 120) redFlags.push(`Marked Tachycardia (${vitals.hr} bpm)`);
       else if (vitals.hr < 50) redFlags.push(`Sinus Bradycardia (${vitals.hr} bpm)`);
       if (vitals.rr >= 28) redFlags.push(`Severe Tachypnea (${vitals.rr}/min)`);
-      if (vitals.temp >= 38.5) redFlags.push(`Pyrexia (${vitals.temp}°C)`);
+      if (vitals.temp >= 101.3) redFlags.push(`Pyrexia (${vitals.temp}°F)`);
 
       const isCardio = text.includes('chest pain') || text.includes('pressure') || text.includes('substernal') || text.includes('jaw') || text.includes('arm radiation') || text.includes('angina');
       const isStroke = text.includes('weakness') || text.includes('facial droop') || text.includes('slurred speech') || text.includes('numbness') || text.includes('thunderclap');
       const isAnaphylaxis = (text.includes('stridor') || text.includes('peanut') || text.includes('hives') || text.includes('swelling')) && (text.includes('breath') || text.includes('wheez'));
-      const isSepsis = (vitals.temp >= 38.0 || vitals.temp <= 36.0) && (vitals.hr > 90) && (vitals.rr > 20);
+      const isSepsis = (vitals.temp >= 100.4 || vitals.temp <= 96.8) && (vitals.hr > 90) && (vitals.rr > 20);
       const isAppendicitis = text.includes('right lower quadrant') || text.includes('rlq') || text.includes('mcburney') || text.includes('periumbilical');
 
       if (isCardio) {
@@ -852,7 +663,7 @@
 
       const urgencyLabel = esiLevel === 1 ? "Immediate / Resuscitation" : esiLevel === 2 ? "Emergent (<15 min)" : esiLevel === 3 ? "Urgent (<60 min)" : "Semi-Urgent";
       
-      const soap = `S (Subjective): ${data.age}yo ${data.gender} presents with chief complaint of "${data.complaint || 'unspecified'}". Onset: ${data.onset || 'N/A'}. Duration: ${data.duration || 'N/A'} days. PMHx: ${data.pmhx || 'None reported'}. Allergies: ${data.allergies || 'NKDA'}. ROS: ${data.ros || 'Reviewed'}.\nO (Objective): Vitals: BP ${vitals.sbp}/${vitals.dbp} mmHg, HR ${vitals.hr} bpm, RR ${vitals.rr}/min, SpO2 ${vitals.spo2}%, Temp ${vitals.temp}°C. Calculated MEWS: ${mews}. Physical Exam: ${data.exam || 'No acute distress noted.'} Pain points identified on body map: ${data.painMarkers ? data.painMarkers.length : 0}.\nA (Assessment): Triage ESI Level ${esiLevel} (${urgencyLabel}). ICD-10: ${primaryIcd}. Differential: ${differential[0]?.condition || 'Under evaluation'}.\nP (Plan): Recommended diagnostic workup: ${orders.join('; ')}. Re-evaluate physiological vitals q15m.`;
+      const soap = `S (Subjective): ${data.age}yo ${data.gender} presents with chief complaint of "${data.complaint || 'unspecified'}". Onset: ${data.onset || 'N/A'}. Duration: ${data.duration || 'N/A'} days. PMHx: ${data.pmhx || 'None reported'}. Allergies: ${data.allergies || 'NKDA'}. ROS: ${data.ros || 'Reviewed'}.\nO (Objective): Vitals: BP ${vitals.sbp}/${vitals.dbp} mmHg, HR ${vitals.hr} bpm, RR ${vitals.rr}/min, SpO2 ${vitals.spo2}%, Temp ${vitals.temp}°F. Calculated MEWS: ${mews}. Physical Exam: ${data.exam || 'No acute distress noted.'} Pain points identified on body map: ${data.painMarkers ? data.painMarkers.length : 0}.\nA (Assessment): Triage ESI Level ${esiLevel} (${urgencyLabel}). ICD-10: ${primaryIcd}. Differential: ${differential[0]?.condition || 'Under evaluation'}.\nP (Plan): Recommended diagnostic workup: ${orders.join('; ')}. Re-evaluate physiological vitals q15m.`;
 
       return {
         esiLevel,
@@ -940,7 +751,7 @@
 
     function renderPriorityQueueRows(patients) {
       const sorted = [...patients].sort((a, b) => (a.analysis?.esiLevel || 3) - (b.analysis?.esiLevel || 3) || (b.analysis?.mewsScore || 0) - (a.analysis?.mewsScore || 0));
-      if (sorted.length === 0) return `<div class="p-8 text-center text-slate-400">No active encounters found in Firestore queue. Click "Reset Demo Data" to load cases.</div>`;
+      if (sorted.length === 0) return `<div class="p-8 text-center text-slate-400">No active encounters found in Firestore queue.</div>`;
 
       return sorted.map(pt => {
         let badgeColor = "bg-slate-100 text-slate-700";
@@ -1096,8 +907,8 @@
                         <input type="number" id="vital-hr" value="78" required class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:outline-none focus:border-sky-500" oninput="window.calculateBMIAndVitals()">
                       </div>
                       <div>
-                        <span class="text-[11px] text-slate-500 block mb-1">Temp (°C)</span>
-                        <input type="number" step="0.1" id="vital-temp" value="36.8" required class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:outline-none focus:border-sky-500" oninput="window.calculateBMIAndVitals()">
+                        <span class="text-[11px] text-slate-500 block mb-1">Temp (°F)</span>
+                        <input type="number" step="0.1" id="vital-temp" value="98.2" required class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:outline-none focus:border-sky-500" oninput="window.calculateBMIAndVitals()">
                       </div>
                       <div>
                         <span class="text-[11px] text-slate-500 block mb-1">Sys BP (mmHg)</span>
@@ -1376,7 +1187,7 @@
         badgesHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold border ${color}">BMI: ${bmi} (${status})</span>`;
       }
 
-      if (temp >= 38.0) badgesHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">Pyrexia</span>`;
+      if (temp >= 100.4) badgesHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">Pyrexia</span>`;
       if (hr > 100) badgesHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">Tachycardia</span>`;
       else if (hr > 0 && hr < 60) badgesHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-700 border border-sky-200">Bradycardia</span>`;
       if (sbp > 0 && sbp < 90) badgesHTML += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">Hypotension</span>`;
@@ -1443,7 +1254,7 @@
           dbp: parseInt(document.getElementById('vital-dbp')?.value) || 80,
           rr: parseInt(document.getElementById('vital-rr')?.value) || 16,
           spo2: parseInt(document.getElementById('vital-spo2')?.value) || 98,
-          temp: parseFloat(document.getElementById('vital-temp')?.value) || 37.0
+          temp: parseFloat(document.getElementById('vital-temp')?.value) || 98.6
         }
       };
     }
@@ -1545,7 +1356,7 @@
       document.getElementById('vital-dbp').value = "48";
       document.getElementById('vital-rr').value = "28";
       document.getElementById('vital-spo2').value = "89";
-      document.getElementById('vital-temp').value = "39.4";
+      document.getElementById('vital-temp').value = "102.9";
       window.calculateBMIAndVitals();
     };
 
@@ -1570,7 +1381,7 @@
       document.getElementById('vital-dbp').value = "86";
       document.getElementById('vital-rr').value = "22";
       document.getElementById('vital-spo2').value = "94";
-      document.getElementById('vital-temp').value = "37.0";
+      document.getElementById('vital-temp').value = "98.6";
       window.calculateBMIAndVitals();
     };
 
@@ -1912,7 +1723,7 @@
                 </div>
                 <div class="bg-white p-2 rounded border border-slate-200">
                   <span class="text-[9px] text-slate-400 uppercase block">Temperature</span>
-                  <strong class="font-mono text-slate-900">${pt.vitals?.temp || 37.0}</strong> <span class="text-[10px] text-slate-500">°C</span>
+                  <strong class="font-mono text-slate-900">${pt.vitals?.temp || 98.6}</strong> <span class="text-[10px] text-slate-500">°F</span>
                 </div>
               </div>
 
@@ -2153,7 +1964,7 @@
             <span>BP: <strong class="text-slate-900">${patient.vitals?.sbp}/${patient.vitals?.dbp}</strong></span>
             <span>SpO2: <strong class="text-slate-900">${patient.vitals?.spo2}%</strong></span>
             <span>RR: <strong class="text-slate-900">${patient.vitals?.rr}</strong></span>
-            <span>Temp: <strong class="text-slate-900">${patient.vitals?.temp}°C</strong></span>
+            <span>Temp: <strong class="text-slate-900">${patient.vitals?.temp}°F</strong></span>
           </div>
         </div>
 
